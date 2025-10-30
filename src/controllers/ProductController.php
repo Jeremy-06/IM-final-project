@@ -42,7 +42,7 @@ class ProductController {
         
         if (!$product) {
             Session::setFlash('message', 'Product not found');
-            header('Location: products.php');
+            header('Location: index.php?page=products');
             exit();
         }
         

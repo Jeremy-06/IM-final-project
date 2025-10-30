@@ -79,17 +79,18 @@ if (Session::isLoggedIn()) {
 
 <div class="container mt-4">
     <?php
-    // Display flash messages
-    if (Session::getFlash('success')) {
+    // Display flash messages (read once to avoid clearing before echo)
+    $flashSuccess = Session::getFlash('success');
+    $flashError = Session::getFlash('message');
+    if ($flashSuccess) {
         echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>
-                <strong>" . Session::getFlash('success') . "</strong>
+                <strong>" . htmlspecialchars($flashSuccess) . "</strong>
                 <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
               </div>";
     }
-    
-    if (Session::getFlash('message')) {
+    if ($flashError) {
         echo "<div class='alert alert-danger alert-dismissible fade show' role='alert'>
-                <strong>" . Session::getFlash('message') . "</strong>
+                <strong>" . htmlspecialchars($flashError) . "</strong>
                 <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
               </div>";
     }

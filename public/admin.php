@@ -52,6 +52,18 @@ switch ($page) {
     case 'customers':
         $controller->customers();
         break;
+    
+    case 'users':
+        $controller->users();
+        break;
+        
+    case 'edit_user':
+        $controller->editUser();
+        break;
+        
+    case 'delete_user':
+        $controller->deleteUser();
+        break;
         
     case 'dashboard':
     default:

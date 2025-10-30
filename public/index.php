@@ -16,13 +16,7 @@ require_once __DIR__ . '/../src/models/Category.php';
 
 Session::start();
 
-// Debug information
-echo "<!-- DEBUG INFO -->";
-echo "<!-- Current Page: " . ($_GET['page'] ?? 'none') . " -->";
-echo "<!-- Current Action: " . ($_GET['action'] ?? 'none') . " -->";
-echo "<!-- POST Data: " . (empty($_POST) ? 'empty' : 'has data') . " -->";
-echo "<!-- Session User ID: " . (Session::get('user_id') ?? 'not set') . " -->";
-echo "<!-- Session Role: " . (Session::get('role') ?? 'not set') . " -->";
+// Note: Avoid any output before headers so redirects work correctly
 
 // Route handling
 $page = isset($_GET['page']) ? $_GET['page'] : 'home';
@@ -94,6 +88,11 @@ switch ($page) {
     case 'order_history':
         $controller = new OrderController();
         $controller->history();
+        break;
+    
+    case 'order_detail':
+        $controller = new OrderController();
+        $controller->detail();
         break;
         
     case 'profile':

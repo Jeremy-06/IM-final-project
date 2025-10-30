@@ -33,6 +33,9 @@ require_once __DIR__ . '/../helpers/Session.php';
                     <a class="nav-link" href="admin.php?page=orders">Orders</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="admin.php?page=users">Users</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="admin.php?page=customers">Customers</a>
                 </li>
             </ul>

@@ -7,6 +7,7 @@ class User extends BaseModel {
     protected $table = 'users';
     
     public function create($email, $password, $role = 'customer') {
+        $email = strtolower($email);
         $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         
         $sql = "INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)";
@@ -20,7 +21,8 @@ class User extends BaseModel {
     }
     
     public function findByEmail($email) {
-        $sql = "SELECT * FROM users WHERE email = ? LIMIT 1";
+        // Case-insensitive email match
+        $sql = "SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, 's', $email);
         mysqli_stmt_execute($stmt);
@@ -50,5 +52,19 @@ class User extends BaseModel {
         $sql = "SELECT id, email, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    public function getAllUsers() {
+        $sql = "SELECT id, email, role, created_at FROM users ORDER BY created_at DESC";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    public function updateRole(int $userId, string $role): bool {
+        $role = $role === 'admin' ? 'admin' : 'customer';
+        $sql = "UPDATE users SET role = ? WHERE id = ?";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'si', $role, $userId);
+        return mysqli_stmt_execute($stmt);
     }
 }

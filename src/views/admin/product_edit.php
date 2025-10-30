@@ -87,5 +87,5 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
 
 <?php
 $content = ob_get_clean();
-include __DIR__ . '/../admin_layout.php';
+include __DIR__ . '/../admin_layout';
 ?>

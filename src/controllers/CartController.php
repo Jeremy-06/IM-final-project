@@ -18,7 +18,7 @@ class CartController {
     public function index() {
         if (!Session::isLoggedIn()) {
             Session::setFlash('message', 'Please login to view cart');
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
@@ -32,19 +32,19 @@ class CartController {
     public function add() {
         if (!Session::isLoggedIn()) {
             Session::setFlash('message', 'Please login to add items to cart');
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
         if (!isset($_POST['type']) || $_POST['type'] !== 'add') {
-            header('Location: products.php');
+            header('Location: index.php?page=products');
             exit();
         }
         
         // Validate CSRF token
         if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
             Session::setFlash('message', 'Invalid request');
-            header('Location: products.php');
+            header('Location: index.php?page=products');
             exit();
         }
         
@@ -53,7 +53,7 @@ class CartController {
         
         if ($quantity <= 0) {
             Session::setFlash('message', 'Invalid quantity');
-            header('Location: products.php');
+            header('Location: index.php?page=products');
             exit();
         }
         
@@ -61,7 +61,7 @@ class CartController {
         $availableQty = $this->productModel->getInventory($productId);
         if ($quantity > $availableQty) {
             Session::setFlash('message', 'Insufficient stock available');
-            header('Location: products.php');
+            header('Location: index.php?page=products');
             exit();
         }
         
@@ -74,20 +74,20 @@ class CartController {
             Session::setFlash('message', 'Failed to add product to cart');
         }
         
-        header('Location: products.php');
+        header('Location: index.php?page=products');
         exit();
     }
     
     public function update() {
         if (!Session::isLoggedIn()) {
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
         // Validate CSRF token
         if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
             Session::setFlash('message', 'Invalid request');
-            header('Location: cart.php');
+            header('Location: index.php?page=cart');
             exit();
         }
         
@@ -111,18 +111,18 @@ class CartController {
         }
         
         Session::setFlash('success', 'Cart updated');
-        header('Location: cart.php');
+        header('Location: index.php?page=cart');
         exit();
     }
     
     public function remove() {
         if (!Session::isLoggedIn()) {
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
         if (!isset($_GET['product_id'])) {
-            header('Location: cart.php');
+            header('Location: index.php?page=cart');
             exit();
         }
         
@@ -136,7 +136,7 @@ class CartController {
             Session::setFlash('message', 'Failed to remove item');
         }
         
-        header('Location: cart.php');
+        header('Location: index.php?page=cart');
         exit();
     }
 }

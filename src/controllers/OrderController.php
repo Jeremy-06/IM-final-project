@@ -21,20 +21,42 @@ class OrderController {
     public function checkout() {
         if (!Session::isLoggedIn()) {
             Session::setFlash('message', 'Please login to checkout');
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
         $customerId = Session::getUserId();
+        // If the user submitted a selection from the cart, store it in session
+        if (isset($_POST['checkout_items']) && is_array($_POST['checkout_items'])) {
+            $selectedProductIds = array_map('intval', $_POST['checkout_items']);
+            Session::set('checkout_selection', $selectedProductIds);
+        }
+
         $cartItems = $this->cartModel->getCartItems($customerId);
+
+        // Apply selection filter if present
+        $selection = Session::get('checkout_selection', null);
+        if (is_array($selection) && !empty($selection)) {
+            $cartItems = array_values(array_filter($cartItems, function($item) use ($selection) {
+                return in_array((int)$item['product_id'], $selection, true);
+            }));
+        }
         
         if (empty($cartItems)) {
             Session::setFlash('message', 'Your cart is empty');
-            header('Location: cart.php');
+            header('Location: index.php?page=cart');
             exit();
         }
         
-        $subtotal = $this->cartModel->getCartTotal($customerId);
+        // Recalculate subtotal based on selection if any
+        if (is_array($selection) && !empty($selection)) {
+            $subtotal = 0.0;
+            foreach ($cartItems as $item) {
+                $subtotal += $item['selling_price'] * $item['quantity'];
+            }
+        } else {
+            $subtotal = $this->cartModel->getCartTotal($customerId);
+        }
         $shippingCost = 50.00; // Fixed shipping
         $taxAmount = $subtotal * 0.12; // 12% tax
         $totalAmount = $subtotal + $shippingCost + $taxAmount;
@@ -44,33 +66,48 @@ class OrderController {
     
     public function placeOrder() {
         if (!Session::isLoggedIn()) {
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
         if (!isset($_POST['place_order'])) {
-            header('Location: checkout.php');
+            header('Location: index.php?page=checkout');
             exit();
         }
         
         // Validate CSRF token
         if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
             Session::setFlash('message', 'Invalid request');
-            header('Location: checkout.php');
+            header('Location: index.php?page=checkout');
             exit();
         }
         
         $customerId = Session::getUserId();
         $cartItems = $this->cartModel->getCartItems($customerId);
         
+        // Apply selection
+        $selection = Session::get('checkout_selection', null);
+        if (is_array($selection) && !empty($selection)) {
+            $cartItems = array_values(array_filter($cartItems, function($item) use ($selection) {
+                return in_array((int)$item['product_id'], $selection, true);
+            }));
+        }
+        
         if (empty($cartItems)) {
             Session::setFlash('message', 'Your cart is empty');
-            header('Location: cart.php');
+            header('Location: index.php?page=cart');
             exit();
         }
         
         // Calculate totals
-        $subtotal = $this->cartModel->getCartTotal($customerId);
+        if (is_array($selection) && !empty($selection)) {
+            $subtotal = 0.0;
+            foreach ($cartItems as $item) {
+                $subtotal += $item['selling_price'] * $item['quantity'];
+            }
+        } else {
+            $subtotal = $this->cartModel->getCartTotal($customerId);
+        }
         $shippingCost = 50.00;
         $taxAmount = $subtotal * 0.12;
         $totalAmount = $subtotal + $shippingCost + $taxAmount;
@@ -89,22 +126,30 @@ class OrderController {
                 $this->productModel->updateInventory($item['product_id'], $newQty);
             }
             
-            // Clear cart
-            $this->cartModel->clearCart($customerId);
+            // Clear selected items from cart (or all if no selection)
+            if (is_array($selection) && !empty($selection)) {
+                $cartId = $this->cartModel->getOrCreateCart($customerId);
+                foreach ($selection as $productId) {
+                    $this->cartModel->removeItem($cartId, (int)$productId);
+                }
+                Session::remove('checkout_selection');
+            } else {
+                $this->cartModel->clearCart($customerId);
+            }
             
             Session::set('order_id', $orderId);
-            header('Location: order_success.php');
+            header('Location: index.php?page=order_success');
             exit();
         } else {
             Session::setFlash('message', 'Failed to place order. Please try again');
-            header('Location: checkout.php');
+            header('Location: index.php?page=checkout');
             exit();
         }
     }
     
     public function success() {
         if (!Session::isLoggedIn()) {
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
@@ -123,7 +168,7 @@ class OrderController {
     public function history() {
         if (!Session::isLoggedIn()) {
             Session::setFlash('message', 'Please login to view order history');
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
@@ -131,5 +176,32 @@ class OrderController {
         $orders = $this->orderModel->getCustomerOrders($customerId);
         
         include __DIR__ . '/../views/order_history.php';
+    }
+
+    public function detail() {
+        if (!Session::isLoggedIn()) {
+            Session::setFlash('message', 'Please login to view order details');
+            header('Location: index.php?page=login');
+            exit();
+        }
+        if (!isset($_GET['id'])) {
+            header('Location: index.php?page=order_history');
+            exit();
+        }
+        $orderId = intval($_GET['id']);
+        $order = $this->orderModel->getOrderDetails($orderId);
+        if (!$order) {
+            Session::setFlash('message', 'Order not found');
+            header('Location: index.php?page=order_history');
+            exit();
+        }
+        // Ensure the logged in user owns this order
+        if ((int)$order['customer_id'] !== (int)Session::getUserId()) {
+            Session::setFlash('message', 'You are not allowed to view this order');
+            header('Location: index.php?page=order_history');
+            exit();
+        }
+        $orderItems = $this->orderModel->getOrderItems($orderId);
+        include __DIR__ . '/../views/order_detail.php';
     }
 }

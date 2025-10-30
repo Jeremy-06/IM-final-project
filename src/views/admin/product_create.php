@@ -105,5 +105,5 @@ Session::remove('form_data');
 
 <?php
 $content = ob_get_clean();
-include __DIR__ . '/../admin_layout.php';
+include __DIR__ . '/../admin_layout';
 ?>

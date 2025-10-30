@@ -16,6 +16,7 @@ require_once __DIR__ . '/../helpers/CSRF.php';
         <table class="table table-bordered">
             <thead class="table-light">
                 <tr>
+                    <th style="width: 50px;">Select</th>
                     <th>Product</th>
                     <th>Price</th>
                     <th>Quantity</th>
@@ -27,6 +28,9 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                 <?php foreach ($cartItems as $item): ?>
                     <?php $itemSubtotal = $item['selling_price'] * $item['quantity']; ?>
                 <tr>
+                    <td class="text-center">
+                        <input type="checkbox" name="checkout_items[]" value="<?php echo $item['product_id']; ?>">
+                    </td>
                     <td>
                         <div class="d-flex align-items-center">
                             <?php if ($item['img_path']): ?>
@@ -47,7 +51,7 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                     </td>
                     <td><strong>₱<?php echo number_format($itemSubtotal, 2); ?></strong></td>
                     <td class="text-center">
-                        <input type="checkbox" name="remove_code[]" value="<?php echo $item['product_id']; ?>">
+                        <a href="index.php?page=cart&action=remove&product_id=<?php echo $item['product_id']; ?>" class="btn btn-sm btn-outline-danger">Remove</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -65,7 +69,7 @@ require_once __DIR__ . '/../helpers/CSRF.php';
         <a href="index.php?page=products" class="btn btn-secondary">Continue Shopping</a>
         <div>
             <button type="submit" class="btn btn-primary">Update Cart</button>
-            <a href="index.php?page=checkout" class="btn btn-success">Proceed to Checkout</a>
+            <button type="submit" formaction="index.php?page=checkout" formmethod="POST" class="btn btn-success">Proceed to Checkout</button>
         </div>
     </div>
 </form>

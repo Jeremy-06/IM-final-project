@@ -1,9 +1,8 @@
 <?php
-$pageTitle = 'Order Details - Admin';
+$pageTitle = 'Order Details - Online Shop';
 ob_start();
 
-require_once __DIR__ . '/../../helpers/Session.php';
-require_once __DIR__ . '/../../helpers/CSRF.php';
+require_once __DIR__ . '/../helpers/Session.php';
 ?>
 
 <div class="row mb-4">
@@ -11,11 +10,11 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
         <h2>Order Details</h2>
     </div>
     <div class="col-md-6 text-end">
-        <a href="admin.php?page=orders" class="btn btn-secondary">
+        <a href="index.php?page=order_history" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Orders
         </a>
     </div>
-</div>
+    </div>
 
 <div class="row">
     <div class="col-md-8">
@@ -26,10 +25,6 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                     <tr>
                         <td><strong>Order Number:</strong></td>
                         <td><?php echo htmlspecialchars($order['order_number']); ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Customer Email:</strong></td>
-                        <td><?php echo htmlspecialchars($order['email']); ?></td>
                     </tr>
                     <tr>
                         <td><strong>Order Date:</strong></td>
@@ -56,10 +51,10 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                 </table>
             </div>
         </div>
-        
+
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Order Items</h5>
+                <h5 class="card-title">Items</h5>
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-light">
@@ -94,9 +89,9 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
     </div>
     
     <div class="col-md-4">
-        <div class="card mb-4">
+        <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Order Summary</h5>
+                <h5 class="card-title">Summary</h5>
                 <table class="table table-sm table-borderless">
                     <tr>
                         <td>Subtotal:</td>
@@ -117,37 +112,12 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                 </table>
             </div>
         </div>
-        
-        <?php if ($order['order_status'] !== 'delivered' && $order['order_status'] !== 'cancelled'): ?>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Update Order Status</h5>
-                <form method="POST" action="admin.php?page=update_order">
-                    <?php echo CSRF::getTokenField(); ?>
-                    <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
-                    
-                    <div class="form-group mb-3">
-                        <label for="status">Status</label>
-                        <select class="form-control" id="status" name="status" required>
-                            <option value="pending" <?php echo ($order['order_status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
-                            <option value="processing" <?php echo ($order['order_status'] == 'processing') ? 'selected' : ''; ?>>Processing</option>
-                            <option value="shipped" <?php echo ($order['order_status'] == 'shipped') ? 'selected' : ''; ?>>Shipped</option>
-                            <option value="delivered" <?php echo ($order['order_status'] == 'delivered') ? 'selected' : ''; ?>>Delivered</option>
-                            <option value="cancelled" <?php echo ($order['order_status'] == 'cancelled') ? 'selected' : ''; ?>>Cancelled</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-save"></i> Update Status
-                    </button>
-                </form>
-            </div>
-        </div>
-        <?php endif; ?>
     </div>
 </div>
 
 <?php
 $content = ob_get_clean();
-include __DIR__ . '/../admin_layout';
+include __DIR__ . '/layout.php';
 ?>
+
+

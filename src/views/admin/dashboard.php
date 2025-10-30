@@ -26,11 +26,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
                     </div>
                 </div>
             </div>
-            <div class="card-footer bg-primary bg-opacity-75">
-                <a href="admin.php?page=products" class="text-white text-decoration-none">
-                    View Details <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
+            
         </div>
     </div>
     
@@ -47,11 +43,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
                     </div>
                 </div>
             </div>
-            <div class="card-footer bg-success bg-opacity-75">
-                <a href="admin.php?page=orders" class="text-white text-decoration-none">
-                    View Details <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
+            
         </div>
     </div>
     
@@ -68,11 +60,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
                     </div>
                 </div>
             </div>
-            <div class="card-footer bg-info bg-opacity-75">
-                <a href="admin.php?page=customers" class="text-white text-decoration-none">
-                    View Details <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
+            
         </div>
     </div>
     
@@ -89,11 +77,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
                     </div>
                 </div>
             </div>
-            <div class="card-footer bg-warning bg-opacity-75">
-                <a href="admin.php?page=orders&status=pending" class="text-white text-decoration-none">
-                    View Details <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
+            
         </div>
     </div>
 </div>
@@ -113,6 +97,9 @@ require_once __DIR__ . '/../../helpers/Session.php';
                     <a href="admin.php?page=customers" class="btn btn-info">
                         <i class="fas fa-users"></i> View Customers
                     </a>
+                    <a href="admin.php?page=users" class="btn btn-warning">
+                        <i class="fas fa-user-cog"></i> Manage Users
+                    </a>
                     <a href="index.php" class="btn btn-secondary">
                         <i class="fas fa-home"></i> Back to Store
                     </a>
@@ -124,5 +111,5 @@ require_once __DIR__ . '/../../helpers/Session.php';
 
 <?php
 $content = ob_get_clean();
-include __DIR__ . '/../admin_layout.php';
+include __DIR__ . '/../admin_layout';
 ?>

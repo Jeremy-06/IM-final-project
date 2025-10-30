@@ -23,18 +23,18 @@ class AuthController {
     
     public function login() {
         if (!isset($_POST['submit'])) {
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
         // Validate CSRF token
         if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
             Session::setFlash('message', 'Invalid request');
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
-        $email = trim($_POST['email']);
+        $email = strtolower(trim($_POST['email']));
         $password = trim($_POST['password']);
         
         // Validation
@@ -48,14 +48,13 @@ class AuthController {
                 Session::setFlash($field . 'Error', $error);
             }
             Session::set('email', $email);
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
         
-        // Verify credentials
-        $user = $this->userModel->verifyPassword($email, $password);
-        
-        if ($user) {
+        // Verify credentials with clearer errors
+        $user = $this->userModel->findByEmail($email);
+        if ($user && password_verify($password, $user['password_hash'])) {
             Session::set('user_id', $user['id']);
             Session::set('email', $user['email']);
             Session::set('role', $user['role']);
@@ -68,9 +67,13 @@ class AuthController {
             }
             exit();
         } else {
-            Session::setFlash('message', 'Invalid email or password');
+            if (!$user) {
+                Session::setFlash('message', 'Account not found');
+            } else {
+                Session::setFlash('message', 'Incorrect password');
+            }
             Session::set('email', $email);
-            header('Location: login.php');
+            header('Location: index.php?page=login');
             exit();
         }
     }
@@ -85,18 +88,18 @@ class AuthController {
     
     public function register() {
         if (!isset($_POST['submit'])) {
-            header('Location: register.php');
+            header('Location: index.php?page=register');
             exit();
         }
         
         // Validate CSRF token
         if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
             Session::setFlash('message', 'Invalid request');
-            header('Location: register.php');
+            header('Location: index.php?page=register');
             exit();
         }
         
-        $email = trim($_POST['email']);
+        $email = strtolower(trim($_POST['email']));
         $password = trim($_POST['password']);
         $confirmPassword = trim($_POST['confirm_password']);
         
@@ -114,7 +117,7 @@ class AuthController {
                 Session::setFlash($field . 'Error', $error);
             }
             Session::set('email', $email);
-            header('Location: register.php');
+            header('Location: index.php?page=register');
             exit();
         }
         
@@ -122,7 +125,7 @@ class AuthController {
         if ($this->userModel->emailExists($email)) {
             Session::setFlash('emailError', 'Email already registered');
             Session::set('email', $email);
-            header('Location: register.php');
+            header('Location: index.php?page=register');
             exit();
         }
         
@@ -138,7 +141,7 @@ class AuthController {
             exit();
         } else {
             Session::setFlash('message', 'Registration failed. Please try again');
-            header('Location: register.php');
+            header('Location: index.php?page=register');
             exit();
         }
     }

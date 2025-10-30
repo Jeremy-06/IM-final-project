@@ -82,10 +82,12 @@ class Order extends BaseModel {
     }
     
     public function getOrdersByStatus($status) {
-        $sql = "SELECT o.*, u.email 
-                FROM orders o 
-                INNER JOIN users u ON o.customer_id = u.id 
-                WHERE o.order_status = ? 
+        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+                FROM orders o
+                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.order_status = ?
+                GROUP BY o.id
                 ORDER BY o.created_at DESC";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, 's', $status);
