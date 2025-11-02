@@ -22,11 +22,23 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
     <table class="table table-striped table-bordered table-hover">
         <thead class="table-dark">
             <tr>
-                <th>ID</th>
-                <th>Category Name</th>
+                <th>
+                    <a href="admin.php?page=categories&sort=id&order=<?php echo ($_GET['sort'] ?? '') === 'id' && ($_GET['order'] ?? 'ASC') === 'ASC' ? 'DESC' : 'ASC'; ?>" class="text-white text-decoration-none">
+                        ID <?php if (($_GET['sort'] ?? '') === 'id') echo ($_GET['order'] ?? 'ASC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
+                <th>
+                    <a href="admin.php?page=categories&sort=category_name&order=<?php echo ($_GET['sort'] ?? '') === 'category_name' && ($_GET['order'] ?? 'ASC') === 'ASC' ? 'DESC' : 'ASC'; ?>" class="text-white text-decoration-none">
+                        Category Name <?php if (($_GET['sort'] ?? 'category_name') === 'category_name') echo ($_GET['order'] ?? 'ASC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
                 <th>Description</th>
                 <th>Status</th>
-                <th>Created</th>
+                <th>
+                    <a href="admin.php?page=categories&sort=created_at&order=<?php echo ($_GET['sort'] ?? '') === 'created_at' && ($_GET['order'] ?? 'ASC') === 'ASC' ? 'DESC' : 'ASC'; ?>" class="text-white text-decoration-none">
+                        Created <?php if (($_GET['sort'] ?? '') === 'created_at') echo ($_GET['order'] ?? 'ASC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
                 <th>Actions</th>
             </tr>
         </thead>

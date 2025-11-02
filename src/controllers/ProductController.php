@@ -50,7 +50,7 @@ class ProductController {
         }
         
         $productId = intval($_GET['id']);
-        $product = $this->productModel->findById($productId);
+        $product = $this->productModel->findByIdWithDetails($productId);
         
         if (!$product) {
             Session::setFlash('message', 'Product not found');

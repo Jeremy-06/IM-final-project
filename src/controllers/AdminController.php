@@ -132,6 +132,13 @@ class AdminController {
                         $productName = trim($_POST['product_name']);
                         $description = "Initial stock for product: {$productName} ({$quantity} units @ ₱{$costPrice} each)";
                         
+                        // Get supplier name if supplier_id is set
+                        $vendorName = null;
+                        if ($supplierId) {
+                            $supplier = $this->supplierModel->findById($supplierId);
+                            $vendorName = $supplier ? $supplier['supplier_name'] : null;
+                        }
+                        
                         $this->expenseModel->create(
                             date('Y-m-d'), // today's date
                             'Inventory',
@@ -139,7 +146,7 @@ class AdminController {
                             $totalCost,
                             'cash',
                             null, // receipt_number
-                            null, // vendor_name
+                            $vendorName, // vendor_name from supplier
                             'Auto-generated expense for initial product stock',
                             Session::get('user_id'),
                             $supplierId
@@ -223,6 +230,13 @@ class AdminController {
                         $productName = trim($_POST['product_name']);
                         $description = "Restocking: {$productName} (+{$quantityAdded} units @ ₱{$costPrice} each)";
                         
+                        // Get supplier name if supplier_id is set
+                        $vendorName = null;
+                        if ($supplierId) {
+                            $supplier = $this->supplierModel->findById($supplierId);
+                            $vendorName = $supplier ? $supplier['supplier_name'] : null;
+                        }
+                        
                         $this->expenseModel->create(
                             date('Y-m-d'), // today's date
                             'Inventory',
@@ -230,7 +244,7 @@ class AdminController {
                             $totalCost,
                             'cash',
                             null, // receipt_number
-                            null, // vendor_name
+                            $vendorName, // vendor_name from supplier
                             'Auto-generated expense for product restocking',
                             Session::get('user_id'),
                             $supplierId
@@ -279,14 +293,16 @@ class AdminController {
     public function orders() {
         $search = $_GET['search'] ?? '';
         $status = $_GET['status'] ?? '';
+        $sortBy = $_GET['sort'] ?? 'created_at';
+        $sortOrder = $_GET['order'] ?? 'DESC';
         
         // Get filtered orders for display (all from main orders table)
         if (!empty($search)) {
-            $orders = $this->orderModel->searchOrders($search, $status);
+            $orders = $this->orderModel->searchOrdersSorted($search, $status, $sortBy, $sortOrder);
         } elseif (!empty($status)) {
-            $orders = $this->orderModel->getOrdersByStatus($status);
+            $orders = $this->orderModel->getOrdersByStatusSorted($status, $sortBy, $sortOrder);
         } else {
-            $orders = $this->orderModel->getAllOrders();
+            $orders = $this->orderModel->getAllOrdersSorted($sortBy, $sortOrder);
         }
         
         // Get all orders for badge counts
@@ -338,6 +354,11 @@ class AdminController {
                     $orderItems = [];
                     foreach ($parsedItems as $item) {
                         $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                        // Add display fields for compatibility
+                        $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
+                        $item['display_image'] = $item['img_path'] ?? '';
+                        $item['is_deleted'] = 1;
+                        $item['use_placeholder'] = true;
                         $orderItems[] = $item;
                     }
                     break;
@@ -366,6 +387,9 @@ class AdminController {
                         $orderItems = [];
                         foreach ($parsedItems as $item) {
                             $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                            // Add display fields for compatibility
+                            $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
+                            $item['display_image'] = $item['img_path'] ?? '';
                             $item['is_deleted'] = 1; // Mark as deleted since we got from history
                             $item['use_placeholder'] = true; // Show unavailable
                             $orderItems[] = $item;
@@ -408,12 +432,77 @@ class AdminController {
         }
         
         $orderId = intval($_GET['id']);
+        
+        // Try to get from regular orders table first
         $order = $this->orderModel->getOrderDetails($orderId);
+        
+        // If not found, try to get from order_history (archived orders)
+        if (!$order) {
+            $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
+            foreach ($historyOrders as $ho) {
+                if ($ho['id'] == $orderId) {
+                    // Parse customer name into first_name and last_name
+                    $nameParts = explode(' ', $ho['customer_name'], 2);
+                    $firstName = $nameParts[0] ?? '';
+                    $lastName = $nameParts[1] ?? '';
+                    
+                    // Convert history format to orders format
+                    $order = [
+                        'id' => $ho['id'],
+                        'order_number' => 'HIST-' . $ho['order_id'],
+                        'customer_name' => $ho['customer_name'],
+                        'email' => $ho['customer_email'],  // Map customer_email to email
+                        'customer_email' => $ho['customer_email'],
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'phone' => null,  // Not stored in history
+                        'address' => null,  // Not stored in history
+                        'city' => null,  // Not stored in history
+                        'postal_code' => null,  // Not stored in history
+                        'country' => null,  // Not stored in history
+                        'total_amount' => $ho['total_amount'],
+                        'created_at' => $ho['created_at'],
+                        'order_status' => 'completed'
+                    ];
+                    break;
+                }
+            }
+        }
+        
         $orderItems = $this->orderModel->getOrderItems($orderId);
+        
+        // If no items found (all products deleted), try to get from order_history backup
+        if (empty($orderItems)) {
+            $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
+            foreach ($historyOrders as $ho) {
+                if ($ho['order_id'] == $orderId) {
+                    // Parse items from JSON backup
+                    $parsedItems = json_decode($ho['items'], true) ?? [];
+                    $orderItems = [];
+                    foreach ($parsedItems as $item) {
+                        $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                        // Add display fields for compatibility
+                        $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
+                        $item['display_image'] = $item['img_path'] ?? '';
+                        $item['is_deleted'] = 1; // Mark as deleted since we got from history
+                        $item['use_placeholder'] = true; // Show unavailable
+                        $orderItems[] = $item;
+                    }
+                    break;
+                }
+            }
+        }
         
         if (!$order) {
             Session::setFlash('message', 'Order not found');
             header('Location: admin.php?page=orders');
+            exit();
+        }
+        
+        // Don't generate receipts for cancelled orders
+        if ($order['order_status'] === 'cancelled') {
+            Session::setFlash('message', 'Cannot generate receipt for cancelled orders');
+            header('Location: admin.php?page=order_detail&id=' . $orderId);
             exit();
         }
         
@@ -533,7 +622,10 @@ class AdminController {
     // Category CRUD Methods
     public function categories() {
         $pageTitle = 'Manage Categories - Admin';
-        $categories = $this->categoryModel->getAll();
+        $sortBy = $_GET['sort'] ?? 'category_name';
+        $sortOrder = $_GET['order'] ?? 'ASC';
+        
+        $categories = $this->categoryModel->getAllSorted($sortBy, $sortOrder);
         include __DIR__ . '/../views/admin/categories.php';
     }
 
@@ -886,17 +978,20 @@ class AdminController {
     
     public function suppliers() {
         $search = $_GET['search'] ?? '';
+        $sortBy = $_GET['sort'] ?? 'supplier_name';
+        $sortOrder = $_GET['order'] ?? 'ASC';
         
         if (!empty($search)) {
-            $suppliers = $this->supplierModel->search($search);
+            $suppliers = $this->supplierModel->searchSorted($search, $sortBy, $sortOrder);
         } else {
-            $suppliers = $this->supplierModel->getAll();
+            $suppliers = $this->supplierModel->getAllSorted($sortBy, $sortOrder);
         }
         
         // Add product count for each supplier
         foreach ($suppliers as &$supplier) {
             $supplier['product_count'] = $this->supplierModel->getProductCount($supplier['id']);
         }
+        unset($supplier); // Important: unset reference to avoid bugs
         
         include __DIR__ . '/../views/admin/suppliers.php';
     }

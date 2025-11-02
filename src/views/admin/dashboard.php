@@ -10,7 +10,10 @@ require_once __DIR__ . '/../../helpers/Session.php';
         <h2 class="mb-3">Admin Dashboard</h2>
         <div class="welcome-message">
             <i class="fas fa-hand-sparkles me-2" style="color: var(--purple-medium);"></i>
-            <span class="welcome-text">Welcome back, <strong><?php echo Session::getEmail(); ?></strong></span>
+            <span class="welcome-text">Welcome back, <strong><?php 
+                $fullName = Session::getFullName();
+                echo !empty($fullName) ? htmlspecialchars($fullName) : htmlspecialchars(Session::getEmail()); 
+            ?></strong></span>
         </div>
     </div>
 </div>

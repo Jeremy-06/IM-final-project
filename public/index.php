@@ -105,6 +105,8 @@ switch ($page) {
             $controller->confirmReceipt();
         } elseif ($action === 'cancel') {
             $controller->cancelOrder();
+        } elseif ($action === 'reorder') {
+            $controller->reorder();
         }
         break;
         

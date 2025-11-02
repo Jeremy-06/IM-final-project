@@ -22,6 +22,8 @@ require_once __DIR__ . '/../../helpers/UIHelper.php';
             <!-- Search Form -->
             <form method="GET" action="admin.php" class="d-flex align-items-center gap-2">
                 <input type="hidden" name="page" value="orders">
+                <input type="hidden" name="sort" value="<?php echo htmlspecialchars($_GET['sort'] ?? 'created_at'); ?>">
+                <input type="hidden" name="order" value="<?php echo htmlspecialchars($_GET['order'] ?? 'DESC'); ?>">
                 <?php if (isset($_GET['status'])): ?>
                     <input type="hidden" name="status" value="<?php echo htmlspecialchars($_GET['status']); ?>">
                 <?php endif; ?>
@@ -39,7 +41,7 @@ require_once __DIR__ . '/../../helpers/UIHelper.php';
                 </div>
                 
                 <?php if (isset($_GET['search']) && $_GET['search'] !== ''): ?>
-                    <a href="admin.php?page=orders<?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?>" 
+                    <a href="admin.php?page=orders<?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?>&sort=<?php echo htmlspecialchars($_GET['sort'] ?? 'created_at'); ?>&order=<?php echo htmlspecialchars($_GET['order'] ?? 'DESC'); ?>" 
                        class="btn" style="background: #6c757d; color: white; border-radius: 25px; padding: 10px 20px; text-decoration: none; outline: none; box-shadow: none;">
                         <i class="fas fa-times"></i>
                     </a>
@@ -48,43 +50,43 @@ require_once __DIR__ . '/../../helpers/UIHelper.php';
             
             <!-- Status Filter Buttons -->
             <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
-                <a href="admin.php?page=orders&status=pending<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" 
+                <a href="admin.php?page=orders&status=pending<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?><?php echo isset($_GET['sort']) ? '&sort=' . htmlspecialchars($_GET['sort']) . '&order=' . htmlspecialchars($_GET['order'] ?? 'DESC') : ''; ?>" 
                    class="d-flex align-items-center" 
-                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'background: #ffc107; color: #333 !important; border: 2px solid #ffc107; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
+                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'background: #fef3c7; color: #92400e !important; border: 2px solid #fbbf24; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
                     <i class="fas fa-clock me-2" style="color: inherit;"></i> 
                     <span class="me-2" style="color: inherit;">Pending</span>
                     <?php if ($statusCounts['pending'] > 0): ?>
-                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'rgba(51,51,51,0.2)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? '#333' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['pending']; ?></span>
+                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'rgba(146, 64, 14, 0.2)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? '#92400e' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['pending']; ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="admin.php?page=orders&status=shipped<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" 
+                <a href="admin.php?page=orders&status=shipped<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?><?php echo isset($_GET['sort']) ? '&sort=' . htmlspecialchars($_GET['sort']) . '&order=' . htmlspecialchars($_GET['order'] ?? 'DESC') : ''; ?>" 
                    class="d-flex align-items-center" 
-                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'shipped') ? 'background: #007bff; color: white !important; border: 2px solid #007bff; box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
+                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'shipped') ? 'background: #dbeafe; color: #1e40af !important; border: 2px solid #93c5fd; box-shadow: 0 4px 12px rgba(147, 197, 253, 0.2);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
                     <i class="fas fa-shipping-fast me-2" style="color: inherit;"></i> 
                     <span class="me-2" style="color: inherit;">Shipped</span>
                     <?php if ($statusCounts['shipped'] > 0): ?>
-                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'shipped') ? 'rgba(255,255,255,0.3)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'shipped') ? 'white' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['shipped']; ?></span>
+                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'shipped') ? 'rgba(30, 64, 175, 0.2)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'shipped') ? '#1e40af' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['shipped']; ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="admin.php?page=orders&status=completed<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" 
+                <a href="admin.php?page=orders&status=completed<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?><?php echo isset($_GET['sort']) ? '&sort=' . htmlspecialchars($_GET['sort']) . '&order=' . htmlspecialchars($_GET['order'] ?? 'DESC') : ''; ?>" 
                    class="d-flex align-items-center" 
-                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'background: #28a745; color: white !important; border: 2px solid #28a745; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
+                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'background: #d1fae5; color: #065f46 !important; border: 2px solid #6ee7b7; box-shadow: 0 4px 12px rgba(110, 231, 183, 0.2);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
                     <i class="fas fa-check-circle me-2" style="color: inherit;"></i> 
                     <span class="me-2" style="color: inherit;">Completed</span>
                     <?php if ($statusCounts['completed'] > 0): ?>
-                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'rgba(255,255,255,0.3)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'white' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['completed']; ?></span>
+                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'rgba(6, 95, 70, 0.2)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? '#065f46' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['completed']; ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="admin.php?page=orders&status=cancelled<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" 
+                <a href="admin.php?page=orders&status=cancelled<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?><?php echo isset($_GET['sort']) ? '&sort=' . htmlspecialchars($_GET['sort']) . '&order=' . htmlspecialchars($_GET['order'] ?? 'DESC') : ''; ?>" 
                    class="d-flex align-items-center" 
-                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'background: #dc3545; color: white !important; border: 2px solid #dc3545; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
+                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'background: #fecaca; color: #991b1b !important; border: 2px solid #fca5a5; box-shadow: 0 4px 12px rgba(252, 165, 165, 0.2);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
                     <i class="fas fa-times-circle me-2" style="color: inherit;"></i> 
                     <span class="me-2" style="color: inherit;">Cancelled</span>
                     <?php if ($statusCounts['cancelled'] > 0): ?>
-                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'rgba(255,255,255,0.3)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'white' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['cancelled']; ?></span>
+                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? 'rgba(153, 27, 27, 0.2)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'cancelled') ? '#991b1b' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['cancelled']; ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="admin.php?page=orders" 
+                <a href="admin.php?page=orders<?php echo isset($_GET['sort']) ? '&sort=' . htmlspecialchars($_GET['sort']) . '&order=' . htmlspecialchars($_GET['order'] ?? 'DESC') : ''; ?>" 
                    class="d-flex align-items-center" 
                    style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (!isset($_GET['status'])) ? 'background: linear-gradient(135deg, #8b5fbf 0%, #b19cd9 100%); color: white !important; border: 2px solid #8b5fbf;' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
                     <i class="fas fa-list me-2" style="color: inherit;"></i> 
@@ -101,12 +103,36 @@ require_once __DIR__ . '/../../helpers/UIHelper.php';
     <table class="table table-striped table-bordered table-hover">
         <thead class="table-dark">
             <tr>
-                <th>Order Number</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Items</th>
-                <th>Total Amount</th>
-                <th>Status</th>
+                <th>
+                    <a href="admin.php?page=orders&sort=order_number&order=<?php echo ($_GET['sort'] ?? '') === 'order_number' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Order Number <?php if (($_GET['sort'] ?? '') === 'order_number') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
+                <th>
+                    <a href="admin.php?page=orders&sort=email&order=<?php echo ($_GET['sort'] ?? '') === 'email' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Customer <?php if (($_GET['sort'] ?? '') === 'email') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
+                <th>
+                    <a href="admin.php?page=orders&sort=created_at&order=<?php echo ($_GET['sort'] ?? '') === 'created_at' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Date <?php if (($_GET['sort'] ?? 'created_at') === 'created_at') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
+                <th>
+                    <a href="admin.php?page=orders&sort=item_count&order=<?php echo ($_GET['sort'] ?? '') === 'item_count' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Items <?php if (($_GET['sort'] ?? '') === 'item_count') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
+                <th>
+                    <a href="admin.php?page=orders&sort=total_amount&order=<?php echo ($_GET['sort'] ?? '') === 'total_amount' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Total Amount <?php if (($_GET['sort'] ?? '') === 'total_amount') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
+                <th>
+                    <a href="admin.php?page=orders&sort=order_status&order=<?php echo ($_GET['sort'] ?? '') === 'order_status' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Status <?php if (($_GET['sort'] ?? '') === 'order_status') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
                 <th>Action</th>
             </tr>
         </thead>

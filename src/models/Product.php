@@ -91,7 +91,7 @@ class Product extends BaseModel {
     
     public function searchAndSortProducts($search = '', $sortBy = 'created_at', $sortOrder = 'DESC') {
         // Validate sort column
-        $allowedColumns = ['product_name', 'category_name', 'supplier_name', 'cost_price', 'selling_price', 'quantity_on_hand', 'created_at'];
+        $allowedColumns = ['product_name', 'category_name', 'supplier_name', 'cost_price', 'selling_price', 'quantity_on_hand', 'created_at', 'is_active'];
         if (!in_array($sortBy, $allowedColumns)) {
             $sortBy = 'created_at';
         }
@@ -101,7 +101,7 @@ class Product extends BaseModel {
         
         // Map sorting columns to actual table columns
         $sortColumn = $sortBy;
-        if ($sortBy === 'product_name' || $sortBy === 'cost_price' || $sortBy === 'selling_price' || $sortBy === 'created_at') {
+        if ($sortBy === 'product_name' || $sortBy === 'cost_price' || $sortBy === 'selling_price' || $sortBy === 'created_at' || $sortBy === 'is_active') {
             $sortColumn = 'p.' . $sortBy;
         } else if ($sortBy === 'category_name') {
             $sortColumn = 'c.category_name';
@@ -281,6 +281,20 @@ class Product extends BaseModel {
         return $row ? $row['quantity_on_hand'] : 0;
     }
     
+    public function findByIdWithDetails($productId) {
+        $sql = "SELECT p.*, c.category_name, s.supplier_name 
+                FROM products p 
+                INNER JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN suppliers s ON p.supplier_id = s.id 
+                WHERE p.id = ? 
+                LIMIT 1";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'i', $productId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_assoc($result);
+    }
+    
     public function hasOrderItems($productId) {
         $sql = "SELECT COUNT(*) as count FROM order_items WHERE product_id = ?";
         $stmt = mysqli_prepare($this->conn, $sql);
@@ -315,13 +329,15 @@ class Product extends BaseModel {
             $product = $this->findById($productId);
             $imagePath = $product['img_path'] ?? null;
             
-            // First, delete order items that are from completed/cancelled orders only
-            $sql = "DELETE oi FROM order_items oi 
-                    INNER JOIN orders o ON oi.order_id = o.id 
-                    WHERE oi.product_id = ? 
-                    AND o.order_status IN ('completed', 'delivered', 'cancelled')";
+            // NOTE: We don't delete order_items anymore to preserve order history
+            // The foreign key will set product_id to NULL automatically
+            // But let's make sure snapshot data is populated for any order_items that don't have it
+            $sql = "UPDATE order_items SET 
+                    product_name = COALESCE(product_name, ?),
+                    product_image = COALESCE(product_image, ?)
+                    WHERE product_id = ?";
             $stmt = mysqli_prepare($this->conn, $sql);
-            mysqli_stmt_bind_param($stmt, 'i', $productId);
+            mysqli_stmt_bind_param($stmt, 'ssi', $product['product_name'], $product['img_path'], $productId);
             mysqli_stmt_execute($stmt);
             
             // Then delete from inventory

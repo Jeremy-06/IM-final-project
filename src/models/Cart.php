@@ -51,6 +51,11 @@ class Cart extends BaseModel {
         }
     }
     
+    public function addToCart($customerId, $productId, $quantity) {
+        $cartId = $this->getOrCreateCart($customerId);
+        return $this->addItem($cartId, $productId, $quantity);
+    }
+    
     public function updateItemQuantity($cartId, $productId, $quantity) {
         if ($quantity <= 0) {
             return $this->removeItem($cartId, $productId);

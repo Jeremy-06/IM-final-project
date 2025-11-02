@@ -288,17 +288,26 @@ require_once __DIR__ . '/../../helpers/Session.php';
                                                  alt="Product" 
                                                  style="width: 50px; height: 50px; object-fit: contain; margin-right: 10px; border-radius: 8px;"
                                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                            <div class="d-none align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(108, 117, 125, 0.2) 100%); border: 2px dashed #dc3545; overflow: hidden;">
-                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(220, 53, 69, 0.2); border-radius: 50%; filter: blur(10px);"></div>
-                                                <i class="fas fa-image-slash" style="font-size: 1.2rem; color: #dc3545;"></i>
+                                            <div class="d-none align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(139, 95, 191, 0.15) 0%, rgba(255, 159, 191, 0.2) 100%); border: 2px dashed var(--purple-medium); overflow: hidden;">
+                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(139, 95, 191, 0.15); border-radius: 50%; filter: blur(10px);"></div>
+                                                <i class="fas fa-box-open" style="font-size: 1.2rem; color: var(--purple-medium);"></i>
                                             </div>
                                         <?php else: ?>
-                                            <div class="d-flex align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(108, 117, 125, 0.2) 100%); border: 2px dashed #dc3545; overflow: hidden;">
-                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(220, 53, 69, 0.2); border-radius: 50%; filter: blur(10px);"></div>
-                                                <i class="fas fa-image-slash" style="font-size: 1.2rem; color: #dc3545;"></i>
+                                            <!-- PURPLE Placeholder for products without images -->
+                                            <div class="d-flex align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(139, 95, 191, 0.15) 0%, rgba(255, 159, 191, 0.2) 100%); border: 2px dashed var(--purple-medium); overflow: hidden;">
+                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(139, 95, 191, 0.15); border-radius: 50%; filter: blur(10px);"></div>
+                                                <i class="fas fa-box-open" style="font-size: 1.2rem; color: var(--purple-medium);"></i>
                                             </div>
                                         <?php endif; ?>
-                                        <span><?php echo htmlspecialchars($product['product_name']); ?></span>
+                                        <div>
+                                            <span><?php echo htmlspecialchars($product['product_name']); ?></span>
+                                            <?php if (!empty($product['product_deleted']) || (isset($product['product_active']) && $product['product_active'] == 0)): ?>
+                                                <br><small style="color: #dc3545;">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    <?php echo !empty($product['product_deleted']) ? 'Product Deleted' : 'Product Inactive'; ?>
+                                                </small>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </td>
                                 <td><strong><?php echo number_format($product['total_quantity']); ?></strong></td>

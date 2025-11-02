@@ -77,6 +77,39 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                 <p style="color: var(--text-primary); line-height: 1.8; font-size: 1.05rem;">
                     <?php echo nl2br(htmlspecialchars($product['description'])); ?>
                 </p>
+                
+                <!-- Product Details (Category & Supplier) -->
+                <hr style="border-top: 2px solid var(--purple-light); margin: 1.5rem 0;">
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3" style="background: linear-gradient(135deg, rgba(139, 95, 191, 0.1) 0%, rgba(139, 95, 191, 0.05) 100%); border-radius: 15px;">
+                            <div class="me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-medium) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-tag" style="color: white; font-size: 1.3rem;"></i>
+                            </div>
+                            <div>
+                                <small style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Category</small>
+                                <div style="color: var(--purple-dark); font-weight: 700; font-size: 1.1rem;">
+                                    <?php echo htmlspecialchars($product['category_name']); ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3" style="background: linear-gradient(135deg, rgba(255, 159, 191, 0.15) 0%, rgba(255, 159, 191, 0.08) 100%); border-radius: 15px;">
+                            <div class="me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--pink-medium) 0%, var(--pink-light) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-truck" style="color: white; font-size: 1.3rem;"></i>
+                            </div>
+                            <div>
+                                <small style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Supplier</small>
+                                <div style="color: var(--purple-dark); font-weight: 700; font-size: 1.1rem;">
+                                    <?php echo $product['supplier_name'] ? htmlspecialchars($product['supplier_name']) : 'N/A'; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         

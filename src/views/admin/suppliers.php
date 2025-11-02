@@ -20,6 +20,8 @@ require_once __DIR__ . '/../../helpers/Session.php';
     <div class="col-md-12">
         <form action="admin.php" method="GET" class="d-flex align-items-center gap-2">
             <input type="hidden" name="page" value="suppliers">
+            <input type="hidden" name="sort" value="<?php echo htmlspecialchars($_GET['sort'] ?? 'supplier_name'); ?>">
+            <input type="hidden" name="order" value="<?php echo htmlspecialchars($_GET['order'] ?? 'ASC'); ?>">
             
             <div class="input-group" style="max-width: 400px;">
                 <input type="text" 
@@ -34,7 +36,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
             </div>
             
             <?php if (isset($search) && $search !== ''): ?>
-                <a href="admin.php?page=suppliers" 
+                <a href="admin.php?page=suppliers&sort=<?php echo htmlspecialchars($_GET['sort'] ?? 'supplier_name'); ?>&order=<?php echo htmlspecialchars($_GET['order'] ?? 'ASC'); ?>" 
                    class="btn" style="background: #6c757d; color: white; border-radius: 25px; padding: 10px 20px; text-decoration: none;">
                     <i class="fas fa-times"></i> Clear
                 </a>
@@ -52,7 +54,16 @@ require_once __DIR__ . '/../../helpers/Session.php';
         <table class="table table-striped table-bordered table-hover">
             <thead class="table-dark">
                 <tr>
-                    <th>Supplier Name</th>
+                    <th>
+                        <a href="admin.php?page=suppliers&sort=id&order=<?php echo ($_GET['sort'] ?? '') === 'id' && ($_GET['order'] ?? 'ASC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($search) && $search !== '' ? '&search=' . urlencode($search) : ''; ?>" class="text-white text-decoration-none">
+                            ID <?php if (($_GET['sort'] ?? '') === 'id') echo ($_GET['order'] ?? 'ASC') === 'ASC' ? '▲' : '▼'; ?>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="admin.php?page=suppliers&sort=supplier_name&order=<?php echo ($_GET['sort'] ?? '') === 'supplier_name' && ($_GET['order'] ?? 'ASC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($search) && $search !== '' ? '&search=' . urlencode($search) : ''; ?>" class="text-white text-decoration-none">
+                            Supplier Name <?php if (($_GET['sort'] ?? 'supplier_name') === 'supplier_name') echo ($_GET['order'] ?? 'ASC') === 'ASC' ? '▲' : '▼'; ?>
+                        </a>
+                    </th>
                     <th>Contact Person</th>
                     <th>Phone</th>
                     <th>Email</th>
@@ -63,6 +74,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
             <tbody>
                 <?php foreach ($suppliers as $supplier): ?>
                     <tr>
+                        <td><?php echo $supplier['id']; ?></td>
                         <td>
                             <strong><?php echo htmlspecialchars($supplier['supplier_name']); ?></strong>
                         </td>

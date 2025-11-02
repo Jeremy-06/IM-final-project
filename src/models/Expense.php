@@ -119,9 +119,10 @@ class Expense extends BaseModel {
     }
     
     public function searchAndSort($search = '', $sortBy = 'expense_date', $sortOrder = 'DESC', $categoryFilter = '') {
-        $sql = "SELECT e.*, u.email as created_by_email 
+        $sql = "SELECT e.*, u.email as created_by_email, s.supplier_name 
                 FROM expenses e 
                 LEFT JOIN users u ON e.created_by = u.id 
+                LEFT JOIN suppliers s ON e.supplier_id = s.id
                 WHERE 1=1";
         
         $params = [];
@@ -142,7 +143,7 @@ class Expense extends BaseModel {
             $types .= 's';
         }
         
-        $allowedSorts = ['expense_date', 'category', 'amount', 'created_at'];
+        $allowedSorts = ['expense_date', 'category', 'amount', 'created_at', 'vendor_name', 'payment_method'];
         $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'expense_date';
         $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
         

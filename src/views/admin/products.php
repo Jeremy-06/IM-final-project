@@ -70,6 +70,11 @@ require_once __DIR__ . '/../../helpers/Session.php';
                     </a>
                 </th>
                 <th>
+                    <a href="admin.php?page=products&sort=supplier_name&order=<?php echo ($_GET['sort'] ?? '') === 'supplier_name' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Supplier <?php if (($_GET['sort'] ?? '') === 'supplier_name') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
+                <th>
                     <a href="admin.php?page=products&sort=cost_price&order=<?php echo ($_GET['sort'] ?? '') === 'cost_price' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
                         Cost Price <?php if (($_GET['sort'] ?? '') === 'cost_price') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
                     </a>
@@ -84,7 +89,11 @@ require_once __DIR__ . '/../../helpers/Session.php';
                         Stock <?php if (($_GET['sort'] ?? '') === 'quantity_on_hand') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
                     </a>
                 </th>
-                <th>Status</th>
+                <th>
+                    <a href="admin.php?page=products&sort=is_active&order=<?php echo ($_GET['sort'] ?? '') === 'is_active' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?>" class="text-white text-decoration-none">
+                        Status <?php if (($_GET['sort'] ?? '') === 'is_active') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
+                    </a>
+                </th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -103,6 +112,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
                 </td>
                 <td><?php echo htmlspecialchars($product['product_name']); ?></td>
                 <td><?php echo htmlspecialchars($product['category_name']); ?></td>
+                <td><?php echo $product['supplier_name'] ? htmlspecialchars($product['supplier_name']) : '<span class="text-muted">N/A</span>'; ?></td>
                 <td>₱<?php echo number_format($product['cost_price'], 2); ?></td>
                 <td>₱<?php echo number_format($product['selling_price'], 2); ?></td>
                 <td>

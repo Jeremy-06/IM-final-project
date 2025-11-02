@@ -80,7 +80,10 @@ class Order extends BaseModel {
     
     public function getOrderItems($orderId) {
         // Get order items with product info (if product still exists)
-        $sql = "SELECT oi.*, p.is_active, p.product_name as current_name, p.img_path as current_image
+        $sql = "SELECT oi.*, 
+                p.is_active, 
+                p.product_name as current_product_name, 
+                p.img_path as current_product_image
                 FROM order_items oi 
                 LEFT JOIN products p ON oi.product_id = p.id 
                 WHERE oi.order_id = ?";
@@ -91,16 +94,22 @@ class Order extends BaseModel {
         $items = mysqli_fetch_all($result, MYSQLI_ASSOC);
         
         foreach ($items as &$item) {
-            // Use snapshot name/image, fallback to current if available
-            $item['product_name'] = $item['product_name'] ?: ($item['current_name'] ?: 'Deleted Product');
-            $item['img_path'] = $item['product_image'] ?: ($item['current_image'] ?: '');
+            // Use snapshot name/image from order_items, fallback to current if snapshot is empty
+            $snapshotName = $item['product_name'] ?? '';
+            $snapshotImage = $item['product_image'] ?? '';
+            
+            $item['display_name'] = !empty($snapshotName) ? $snapshotName : 
+                                   (!empty($item['current_product_name']) ? $item['current_product_name'] : 'Deleted Product');
+            $item['display_image'] = !empty($snapshotImage) ? $snapshotImage : 
+                                    (!empty($item['current_product_image']) ? $item['current_product_image'] : '');
             
             // is_deleted: product doesn't exist in products table anymore
-            $item['is_deleted'] = empty($item['current_name']) ? 1 : 0;
+            $item['is_deleted'] = empty($item['current_product_name']) ? 1 : 0;
             
             // Show unavailable if: product deleted OR inactive
-            $item['use_placeholder'] = $item['is_deleted'] || $item['is_active'] == 0;
+            $item['use_placeholder'] = $item['is_deleted'] || ($item['is_active'] == 0);
         }
+        unset($item); // Break reference
         
         return $items;
     }
@@ -116,6 +125,36 @@ class Order extends BaseModel {
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
     
+    public function getAllOrdersSorted($sortBy = 'created_at', $sortOrder = 'DESC') {
+        // Validate sort column
+        $allowedColumns = ['order_number', 'email', 'created_at', 'item_count', 'total_amount', 'order_status'];
+        if (!in_array($sortBy, $allowedColumns)) {
+            $sortBy = 'created_at';
+        }
+        
+        // Validate sort order
+        $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
+        
+        // Map sort columns
+        $sortColumn = $sortBy;
+        if ($sortBy === 'order_number' || $sortBy === 'created_at' || $sortBy === 'total_amount' || $sortBy === 'order_status') {
+            $sortColumn = 'o.' . $sortBy;
+        } else if ($sortBy === 'email') {
+            $sortColumn = 'u.email';
+        } else if ($sortBy === 'item_count') {
+            $sortColumn = 'item_count';
+        }
+        
+        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count 
+                FROM orders o 
+                INNER JOIN users u ON o.customer_id = u.id 
+                LEFT JOIN order_items oi ON o.id = oi.order_id 
+                GROUP BY o.id 
+                ORDER BY {$sortColumn} {$sortOrder}";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
     public function getOrdersByStatus($status) {
         $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
                 FROM orders o
@@ -124,6 +163,40 @@ class Order extends BaseModel {
                 WHERE o.order_status = ?
                 GROUP BY o.id
                 ORDER BY o.created_at DESC";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, 's', $status);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    public function getOrdersByStatusSorted($status, $sortBy = 'created_at', $sortOrder = 'DESC') {
+        // Validate sort column
+        $allowedColumns = ['order_number', 'email', 'created_at', 'item_count', 'total_amount', 'order_status'];
+        if (!in_array($sortBy, $allowedColumns)) {
+            $sortBy = 'created_at';
+        }
+        
+        // Validate sort order
+        $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
+        
+        // Map sort columns
+        $sortColumn = $sortBy;
+        if ($sortBy === 'order_number' || $sortBy === 'created_at' || $sortBy === 'total_amount' || $sortBy === 'order_status') {
+            $sortColumn = 'o.' . $sortBy;
+        } else if ($sortBy === 'email') {
+            $sortColumn = 'u.email';
+        } else if ($sortBy === 'item_count') {
+            $sortColumn = 'item_count';
+        }
+        
+        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+                FROM orders o
+                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.order_status = ?
+                GROUP BY o.id
+                ORDER BY {$sortColumn} {$sortOrder}";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, 's', $status);
         mysqli_stmt_execute($stmt);
@@ -148,6 +221,56 @@ class Order extends BaseModel {
         
         $sql .= " GROUP BY o.id
                   ORDER BY o.created_at DESC";
+        
+        $stmt = mysqli_prepare($this->conn, $sql);
+        
+        if (!empty($status)) {
+            mysqli_stmt_bind_param($stmt, 'ssss', $searchTerm, $searchTerm, $searchTerm, $status);
+        } else {
+            mysqli_stmt_bind_param($stmt, 'sss', $searchTerm, $searchTerm, $searchTerm);
+        }
+        
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    public function searchOrdersSorted($search, $status = '', $sortBy = 'created_at', $sortOrder = 'DESC') {
+        // Validate sort column
+        $allowedColumns = ['order_number', 'email', 'created_at', 'item_count', 'total_amount', 'order_status'];
+        if (!in_array($sortBy, $allowedColumns)) {
+            $sortBy = 'created_at';
+        }
+        
+        // Validate sort order
+        $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
+        
+        // Map sort columns
+        $sortColumn = $sortBy;
+        if ($sortBy === 'order_number' || $sortBy === 'created_at' || $sortBy === 'total_amount' || $sortBy === 'order_status') {
+            $sortColumn = 'o.' . $sortBy;
+        } else if ($sortBy === 'email') {
+            $sortColumn = 'u.email';
+        } else if ($sortBy === 'item_count') {
+            $sortColumn = 'item_count';
+        }
+        
+        $searchTerm = '%' . $search . '%';
+        
+        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+                FROM orders o
+                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_items oi ON o.id = oi.order_id
+                WHERE (o.order_number LIKE ? 
+                    OR u.email LIKE ? 
+                    OR CAST(o.total_amount AS CHAR) LIKE ?)";
+        
+        if (!empty($status)) {
+            $sql .= " AND o.order_status = ?";
+        }
+        
+        $sql .= " GROUP BY o.id
+                  ORDER BY {$sortColumn} {$sortOrder}";
         
         $stmt = mysqli_prepare($this->conn, $sql);
         
@@ -275,7 +398,9 @@ class Order extends BaseModel {
                 COALESCE(NULLIF(oi.product_image, ''), p.img_path) as product_image,
                 SUM(oi.quantity) as total_quantity,
                 SUM(oi.item_total) as total_revenue,
-                COUNT(DISTINCT oi.order_id) as order_count
+                COUNT(DISTINCT oi.order_id) as order_count,
+                p.is_active as product_active,
+                CASE WHEN p.id IS NULL THEN 1 ELSE 0 END as product_deleted
                 FROM order_items oi
                 INNER JOIN orders o ON oi.order_id = o.id
                 LEFT JOIN products p ON oi.product_id = p.id
@@ -285,7 +410,7 @@ class Order extends BaseModel {
             $sql .= " AND o.created_at >= ? AND o.created_at <= ?";
         }
         
-        $sql .= " GROUP BY oi.product_id, oi.product_name, COALESCE(NULLIF(oi.product_image, ''), p.img_path)
+        $sql .= " GROUP BY oi.product_id, oi.product_name, COALESCE(NULLIF(oi.product_image, ''), p.img_path), p.is_active, CASE WHEN p.id IS NULL THEN 1 ELSE 0 END
                   ORDER BY total_quantity DESC
                   LIMIT ?";
         

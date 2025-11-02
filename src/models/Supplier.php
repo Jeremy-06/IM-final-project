@@ -52,11 +52,47 @@ class Supplier extends BaseModel {
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
     
+    public function getAllSorted($sortBy = 'supplier_name', $sortOrder = 'ASC') {
+        // Validate sort column
+        $allowedColumns = ['id', 'supplier_name'];
+        if (!in_array($sortBy, $allowedColumns)) {
+            $sortBy = 'supplier_name';
+        }
+        
+        // Validate sort order
+        $sortOrder = strtoupper($sortOrder) === 'DESC' ? 'DESC' : 'ASC';
+        
+        $sql = "SELECT * FROM suppliers ORDER BY {$sortBy} {$sortOrder}";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
     public function search($keyword) {
         $searchTerm = "%{$keyword}%";
         $sql = "SELECT * FROM suppliers 
                 WHERE supplier_name LIKE ? OR contact_person LIKE ? OR email LIKE ? OR phone LIKE ?
                 ORDER BY supplier_name ASC";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    public function searchSorted($keyword, $sortBy = 'supplier_name', $sortOrder = 'ASC') {
+        // Validate sort column
+        $allowedColumns = ['id', 'supplier_name'];
+        if (!in_array($sortBy, $allowedColumns)) {
+            $sortBy = 'supplier_name';
+        }
+        
+        // Validate sort order
+        $sortOrder = strtoupper($sortOrder) === 'DESC' ? 'DESC' : 'ASC';
+        
+        $searchTerm = "%{$keyword}%";
+        $sql = "SELECT * FROM suppliers 
+                WHERE supplier_name LIKE ? OR contact_person LIKE ? OR email LIKE ? OR phone LIKE ?
+                ORDER BY {$sortBy} {$sortOrder}";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, 'ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
         mysqli_stmt_execute($stmt);

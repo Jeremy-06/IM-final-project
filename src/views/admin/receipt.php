@@ -317,10 +317,7 @@ $pageTitle = 'Order Receipt - Lotus Plushies';
                     <?php foreach ($orderItems as $item): ?>
                     <tr>
                         <td>
-                            <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
-                            <?php if (!empty($item['use_placeholder'])): ?>
-                                <br><small style="color: #dc3545;"><i class="fas fa-exclamation-triangle me-1"></i>Product no longer available</small>
-                            <?php endif; ?>
+                            <strong><?php echo htmlspecialchars($item['display_name']); ?></strong>
                         </td>
                         <td style="text-align: center;">
                             <?php echo $item['quantity']; ?>

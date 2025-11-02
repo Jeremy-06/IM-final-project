@@ -254,16 +254,16 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
                                             <small style="font-size: 0.6rem; color: #6c757d; font-weight: 600;">Unavailable</small>
                                         </div>
                                     </div>
-                                <?php elseif (!empty($item['img_path'])): ?>
+                                <?php elseif (!empty($item['display_image'])): ?>
                                     <?php 
                                     // Handle both old paths (without products/) and new paths (with products/)
-                                    $imagePath = $item['img_path'];
+                                    $imagePath = $item['display_image'];
                                     if (strpos($imagePath, 'products/') !== 0 && strpos($imagePath, 'profiles/') !== 0) {
                                         $imagePath = 'products/' . $imagePath;
                                     }
                                     ?>
                                     <img src="uploads/<?php echo htmlspecialchars($imagePath); ?>" 
-                                         alt="<?php echo htmlspecialchars($item['product_name']); ?>" 
+                                         alt="<?php echo htmlspecialchars($item['display_name']); ?>" 
                                          class="img-fluid rounded" 
                                          style="max-height: 90px; max-width: 90px; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -287,7 +287,7 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
                             </div>
                             <div class="col-md-4">
                                 <h6 class="mb-2 fw-bold" style="color: var(--purple-dark); font-size: 1.05rem;">
-                                    <?php echo htmlspecialchars($item['product_name']); ?>
+                                    <?php echo htmlspecialchars($item['display_name']); ?>
                                 </h6>
                                 <?php if (!empty($item['product_id'])): ?>
                                     <p class="text-muted small mb-2">ID: <span style="color: #666; font-weight: 500;"><?php echo $item['product_id']; ?></span></p>
@@ -348,6 +348,88 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
                     </p>
                 </div>
                 <?php endif; ?>
+                
+                <!-- Buy Again Feature -->
+                <div class="mt-4 pt-4" style="border-top: 2px solid #e0e0e0;">
+                    <button type="button" class="btn btn-primary w-100"
+                           style="border-radius: 15px; background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-medium) 100%); border: none; padding: 14px; font-weight: 600; font-size: 1.05rem;"
+                           data-bs-toggle="modal" data-bs-target="#reorderModal">
+                        <i class="fas fa-redo me-2"></i>Buy Again
+                    </button>
+                    <p class="text-muted small text-center mt-2 mb-0">
+                        <i class="fas fa-info-circle me-1"></i>Reorder the same items
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reorder Modal -->
+<div class="modal fade" id="reorderModal" tabindex="-1" aria-labelledby="reorderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-medium) 100%); color: white;">
+                <h5 class="modal-title" id="reorderModalLabel" style="color: white;">
+                    <i class="fas fa-redo me-2"></i>Buy Again
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Review the items from this order:</p>
+                
+                <div class="list-group">
+                    <?php 
+                    $availableCount = 0;
+                    foreach ($orderItems as $item): 
+                        $isAvailable = empty($item['is_deleted']) && empty($item['use_placeholder']);
+                        if ($isAvailable) $availableCount++;
+                    ?>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <?php if ($isAvailable): ?>
+                                    <i class="fas fa-check-circle text-success" style="font-size: 1.2rem;"></i>
+                                <?php else: ?>
+                                    <i class="fas fa-exclamation-triangle text-danger" style="font-size: 1.2rem;"></i>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <div class="fw-bold"><?php echo htmlspecialchars($item['display_name']); ?></div>
+                                <small class="text-muted">
+                                    Qty: <?php echo $item['quantity']; ?> × <?php echo UIHelper::formatCurrency($item['unit_price']); ?>
+                                    <?php if (!$isAvailable): ?>
+                                        <span class="text-danger">(Unavailable)</span>
+                                    <?php endif; ?>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold"><?php echo UIHelper::formatCurrency($item['item_total']); ?></div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div class="mt-3 p-3 bg-light rounded">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <strong><?php echo $availableCount; ?></strong> items will be added to cart
+                        </div>
+                        <div class="col-6">
+                            <strong><?php echo count($orderItems) - $availableCount; ?></strong> items unavailable
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="index.php?page=order&action=reorder&id=<?php echo $order['id']; ?>" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="<?php echo CSRF::generateToken(); ?>">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                    </button>
+                </form>
             </div>
         </div>
     </div>

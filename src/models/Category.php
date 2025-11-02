@@ -36,6 +36,21 @@ class Category extends BaseModel {
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
     
+    public function getAllSorted($sortBy = 'category_name', $sortOrder = 'ASC') {
+        // Validate sort column
+        $allowedColumns = ['id', 'category_name', 'created_at'];
+        if (!in_array($sortBy, $allowedColumns)) {
+            $sortBy = 'category_name';
+        }
+        
+        // Validate sort order
+        $sortOrder = strtoupper($sortOrder) === 'DESC' ? 'DESC' : 'ASC';
+        
+        $sql = "SELECT * FROM categories ORDER BY {$sortBy} {$sortOrder}";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
     public function delete($id) {
         // Check if category is used by any products
         $checkSql = "SELECT COUNT(*) as count FROM products WHERE category_id = ?";

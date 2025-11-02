@@ -63,6 +63,25 @@ class Session {
         return self::get('first_name');
     }
     
+    public static function getLastName() {
+        return self::get('last_name');
+    }
+    
+    public static function getFullName() {
+        $firstName = self::get('first_name');
+        $lastName = self::get('last_name');
+        
+        if (!empty($firstName) && !empty($lastName)) {
+            return $firstName . ' ' . $lastName;
+        } elseif (!empty($firstName)) {
+            return $firstName;
+        } elseif (!empty($lastName)) {
+            return $lastName;
+        }
+        
+        return null;
+    }
+    
     /**
      * Check if the currently logged-in user still exists in database
      * If user was deleted, destroy session and redirect to login

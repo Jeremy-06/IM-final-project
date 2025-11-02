@@ -49,7 +49,7 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                         </div>
                         <div class="col-md-2">
                             <p class="mb-0 text-muted small">Price</p>
-                            <h5 class="mb-0 text-primary">₱<?php echo number_format($item['selling_price'], 2); ?></h5>
+                            <h5 class="mb-0 text-primary cart-price">₱<?php echo number_format($item['selling_price'], 2); ?></h5>
                         </div>
                         <div class="col-md-2">
                             <p class="mb-1 text-muted small">Quantity</p>
@@ -81,7 +81,7 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                     </div>
                     <div class="row mt-3 pt-3 border-top">
                         <div class="col-md-12 text-end">
-                            <h5 class="mb-0"><span class="text-muted">Subtotal:</span> <span class="text-primary">₱<?php echo number_format($itemSubtotal, 2); ?></span></h5>
+                            <h5 class="mb-0"><span class="text-muted">Subtotal:</span> <span class="text-primary cart-price">₱<?php echo number_format($itemSubtotal, 2); ?></span></h5>
                         </div>
                     </div>
                 </div>
@@ -102,12 +102,12 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-muted">Subtotal:</span>
-                        <span>₱<?php echo number_format($cartTotal, 2); ?></span>
+                        <span class="cart-price">₱<?php echo number_format($cartTotal, 2); ?></span>
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between mb-4">
                         <h5 class="mb-0">Total:</h5>
-                        <h5 class="mb-0 text-primary">₱<?php echo number_format($cartTotal, 2); ?></h5>
+                        <h5 class="mb-0 text-primary cart-price">₱<?php echo number_format($cartTotal, 2); ?></h5>
                     </div>
                     
                     <div class="d-grid gap-2">
@@ -148,6 +148,12 @@ require_once __DIR__ . '/../helpers/CSRF.php';
 
 .qty-btn-cart:active {
     transform: scale(0.95);
+}
+
+/* Prevent price text from wrapping */
+.cart-price {
+    white-space: nowrap;
+    font-size: 1.2rem !important;
 }
 </style>
 

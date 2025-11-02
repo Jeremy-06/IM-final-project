@@ -259,6 +259,9 @@ class OrderController {
                     $orderItems = [];
                     foreach ($parsedItems as $item) {
                         $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                        // Add display fields for compatibility
+                        $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
+                        $item['display_image'] = $item['img_path'] ?? '';
                         $item['is_deleted'] = 1; // Mark as deleted
                         $item['use_placeholder'] = true; // Show unavailable
                         $orderItems[] = $item;
@@ -348,6 +351,78 @@ class OrderController {
         }
         
         header('Location: index.php?page=order_history');
+        exit();
+    }
+    
+    public function reorder() {
+        if (!Session::isLoggedIn()) {
+            Session::setFlash('message', 'Please login to reorder');
+            header('Location: index.php?page=login');
+            exit();
+        }
+        
+        if (!isset($_GET['id']) || !isset($_POST['csrf_token'])) {
+            Session::setFlash('message', 'Invalid request');
+            header('Location: index.php?page=order_history');
+            exit();
+        }
+        
+        if (!CSRF::validateToken($_POST['csrf_token'])) {
+            Session::setFlash('message', 'Invalid request token');
+            header('Location: index.php?page=order_history');
+            exit();
+        }
+        
+        $orderId = intval($_GET['id']);
+        $customerId = Session::getUserId();
+        
+        // Get order details to verify ownership
+        $order = $this->orderModel->getOrderDetails($orderId);
+        
+        if (!$order || (int)$order['customer_id'] !== (int)$customerId) {
+            Session::setFlash('message', 'Order not found or unauthorized');
+            header('Location: index.php?page=order_history');
+            exit();
+        }
+        
+        // Get order items
+        $orderItems = $this->orderModel->getOrderItems($orderId);
+        
+        if (empty($orderItems)) {
+            Session::setFlash('message', 'No items found in this order');
+            header('Location: index.php?page=order_history');
+            exit();
+        }
+        
+        // Add items to cart
+        $addedCount = 0;
+        $skippedCount = 0;
+        
+        foreach ($orderItems as $item) {
+            // Check if product still exists and is active
+            $product = $this->productModel->findById($item['product_id']);
+            
+            if ($product && $product['is_active']) {
+                // Add to cart
+                $this->cartModel->addToCart($customerId, $item['product_id'], $item['quantity']);
+                $addedCount++;
+            } else {
+                $skippedCount++;
+            }
+        }
+        
+        // Set success message
+        if ($addedCount > 0) {
+            $message = "Added $addedCount item(s) to your cart";
+            if ($skippedCount > 0) {
+                $message .= ". $skippedCount item(s) were skipped (unavailable)";
+            }
+            Session::setFlash('success', $message);
+        } else {
+            Session::setFlash('message', 'No available items could be added to cart');
+        }
+        
+        header('Location: index.php?page=cart');
         exit();
     }
 }

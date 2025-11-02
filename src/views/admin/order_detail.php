@@ -151,17 +151,17 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                                         <small style="font-size: 0.7rem; color: #6c757d; font-weight: 600;">Unavailable</small>
                                                     </div>
                                                 </div>
-                                            <?php elseif (!empty($item['img_path'])): ?>
+                                            <?php elseif (!empty($item['display_image'])): ?>
                                                 <?php 
                                                 // Handle both old paths (without products/) and new paths (with products/)
-                                                $imagePath = $item['img_path'];
+                                                $imagePath = $item['display_image'];
                                                 if (strpos($imagePath, 'products/') !== 0 && strpos($imagePath, 'profiles/') !== 0) {
                                                     // Old format - assume it's a product image
                                                     $imagePath = 'products/' . $imagePath;
                                                 }
                                                 ?>
                                                 <img src="uploads/<?php echo htmlspecialchars($imagePath); ?>" 
-                                                     alt="<?php echo htmlspecialchars($item['product_name']); ?>" 
+                                                     alt="<?php echo htmlspecialchars($item['display_name']); ?>" 
                                                      style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                             <?php else: ?>
                                                 <!-- PURPLE Placeholder for products without images (but still active) -->
@@ -175,7 +175,7 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                             <?php endif; ?>
                                         </div>
                                         <div style="flex: 1;">
-                                            <div style="font-weight: 600; color: #333; margin-bottom: 8px;"><?php echo htmlspecialchars($item['product_name']); ?></div>
+                                            <div style="font-weight: 600; color: #333; margin-bottom: 8px;"><?php echo htmlspecialchars($item['display_name']); ?></div>
                                             <?php if (!empty($item['is_deleted']) || !empty($item['use_placeholder'])): ?>
                                                 <div style="background: #fff3cd; border-left: 4px solid #dc3545; border-radius: 8px; padding: 10px 12px; display: inline-block;">
                                                     <small style="color: #721c24;">
