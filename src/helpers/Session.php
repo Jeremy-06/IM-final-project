@@ -62,4 +62,29 @@ class Session {
     public static function getFirstName() {
         return self::get('first_name');
     }
+    
+    /**
+     * Check if the currently logged-in user still exists in database
+     * If user was deleted, destroy session and redirect to login
+     */
+    public static function validateUserExists() {
+        if (!self::isLoggedIn()) {
+            return true; // Not logged in, nothing to validate
+        }
+        
+        require_once __DIR__ . '/../models/User.php';
+        $userModel = new User();
+        $userId = self::getUserId();
+        $user = $userModel->findById($userId);
+        
+        if (!$user) {
+            // User was deleted, destroy session and redirect
+            self::destroy();
+            self::setFlash('message', 'Your account has been deleted. Please contact support if you believe this is an error.');
+            header('Location: index.php?page=login');
+            exit();
+        }
+        
+        return true;
+    }
 }

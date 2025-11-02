@@ -276,13 +276,26 @@ require_once __DIR__ . '/../../helpers/Session.php';
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <?php if (!empty($product['product_image'])): ?>
-                                            <img src="uploads/<?php echo htmlspecialchars($product['product_image']); ?>" 
+                                            <?php 
+                                            // Handle both old paths (without products/) and new paths (with products/)
+                                            $imagePath = $product['product_image'];
+                                            if (strpos($imagePath, 'products/') !== 0 && strpos($imagePath, 'profiles/') !== 0) {
+                                                // Old format - assume it's a product image
+                                                $imagePath = 'products/' . $imagePath;
+                                            }
+                                            ?>
+                                            <img src="uploads/<?php echo htmlspecialchars($imagePath); ?>" 
                                                  alt="Product" 
-                                                 style="width: 50px; height: 50px; object-fit: contain; margin-right: 10px; border-radius: 8px;">
+                                                 style="width: 50px; height: 50px; object-fit: contain; margin-right: 10px; border-radius: 8px;"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div class="d-none align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(108, 117, 125, 0.2) 100%); border: 2px dashed #dc3545; overflow: hidden;">
+                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(220, 53, 69, 0.2); border-radius: 50%; filter: blur(10px);"></div>
+                                                <i class="fas fa-image-slash" style="font-size: 1.2rem; color: #dc3545;"></i>
+                                            </div>
                                         <?php else: ?>
-                                            <div class="d-flex align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(139, 95, 191, 0.15) 0%, rgba(255, 159, 191, 0.2) 100%); overflow: hidden;">
-                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(139, 95, 191, 0.2); border-radius: 50%; filter: blur(10px);"></div>
-                                                <i class="fas fa-box-open" style="font-size: 1.5rem; background: linear-gradient(135deg, var(--purple-dark) 0%, var(--pink-medium) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                                            <div class="d-flex align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(108, 117, 125, 0.2) 100%); border: 2px dashed #dc3545; overflow: hidden;">
+                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(220, 53, 69, 0.2); border-radius: 50%; filter: blur(10px);"></div>
+                                                <i class="fas fa-image-slash" style="font-size: 1.2rem; color: #dc3545;"></i>
                                             </div>
                                         <?php endif; ?>
                                         <span><?php echo htmlspecialchars($product['product_name']); ?></span>

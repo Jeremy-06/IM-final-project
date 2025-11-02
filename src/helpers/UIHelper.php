@@ -144,7 +144,7 @@ class UIHelper {
         ];
         
         foreach ($orders as $order) {
-            $status = $order['order_status'];
+            $status = $order['order_status'] ?? 'pending';  // Default to pending if not set
             
             // Group for customer view
             if ($groupShipped && ($status == 'processing' || $status == 'delivered')) {

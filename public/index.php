@@ -114,6 +114,8 @@ switch ($page) {
             $controller->updateProfile();
         } elseif ($action === 'change_password') {
             $controller->changePassword();
+        } elseif ($action === 'delete_account') {
+            $controller->deleteAccount();
         } else {
             $controller->profile();
         }

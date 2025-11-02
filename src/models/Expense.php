@@ -6,11 +6,11 @@ class Expense extends BaseModel {
     
     protected $table = 'expenses';
     
-    public function create($expenseDate, $category, $description, $amount, $paymentMethod = 'cash', $receiptNumber = null, $vendorName = null, $notes = null, $createdBy = null) {
-        $sql = "INSERT INTO expenses (expense_date, category, description, amount, payment_method, receipt_number, vendor_name, notes, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public function create($expenseDate, $category, $description, $amount, $paymentMethod = 'cash', $receiptNumber = null, $vendorName = null, $notes = null, $createdBy = null, $supplierId = null) {
+        $sql = "INSERT INTO expenses (expense_date, category, description, amount, payment_method, receipt_number, vendor_name, notes, created_by, supplier_id) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'sssdssssi', $expenseDate, $category, $description, $amount, $paymentMethod, $receiptNumber, $vendorName, $notes, $createdBy);
+        mysqli_stmt_bind_param($stmt, 'sssdssssii', $expenseDate, $category, $description, $amount, $paymentMethod, $receiptNumber, $vendorName, $notes, $createdBy, $supplierId);
         
         if (mysqli_stmt_execute($stmt)) {
             return mysqli_insert_id($this->conn);
@@ -18,19 +18,20 @@ class Expense extends BaseModel {
         return false;
     }
     
-    public function update($id, $expenseDate, $category, $description, $amount, $paymentMethod = 'cash', $receiptNumber = null, $vendorName = null, $notes = null) {
+    public function update($id, $expenseDate, $category, $description, $amount, $paymentMethod = 'cash', $receiptNumber = null, $vendorName = null, $notes = null, $supplierId = null) {
         $sql = "UPDATE expenses 
-                SET expense_date = ?, category = ?, description = ?, amount = ?, payment_method = ?, receipt_number = ?, vendor_name = ?, notes = ?
+                SET expense_date = ?, category = ?, description = ?, amount = ?, payment_method = ?, receipt_number = ?, vendor_name = ?, notes = ?, supplier_id = ?
                 WHERE id = ?";
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'sssdssss i', $expenseDate, $category, $description, $amount, $paymentMethod, $receiptNumber, $vendorName, $notes, $id);
+        mysqli_stmt_bind_param($stmt, 'sssdssssii', $expenseDate, $category, $description, $amount, $paymentMethod, $receiptNumber, $vendorName, $notes, $supplierId, $id);
         return mysqli_stmt_execute($stmt);
     }
     
     public function getAllExpenses() {
-        $sql = "SELECT e.*, u.email as created_by_email 
+        $sql = "SELECT e.*, u.email as created_by_email, s.supplier_name
                 FROM expenses e 
                 LEFT JOIN users u ON e.created_by = u.id 
+                LEFT JOIN suppliers s ON e.supplier_id = s.id
                 ORDER BY e.expense_date DESC, e.created_at DESC";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);

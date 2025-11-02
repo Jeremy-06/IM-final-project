@@ -4,6 +4,22 @@ ob_start();
 
 require_once __DIR__ . '/../helpers/Session.php';
 require_once __DIR__ . '/../helpers/CSRF.php';
+require_once __DIR__ . '/../models/User.php';
+
+// Check if profile is complete
+$userModel = new User();
+$customerId = Session::getUserId();
+$userProfile = $userModel->findById($customerId);
+$requiredFields = ['first_name', 'last_name', 'email', 'phone', 'address', 'city'];
+$incompleteFields = [];
+
+foreach ($requiredFields as $field) {
+    if (empty($userProfile[$field])) {
+        $incompleteFields[] = $field;
+    }
+}
+
+$profileComplete = empty($incompleteFields);
 ?>
 
 <div class="row mb-4">
@@ -106,10 +122,24 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                 
                 <form method="POST" action="index.php?page=checkout&action=process">
                     <?php echo CSRF::getTokenField(); ?>
+                    
+                    <?php if (!$profileComplete): ?>
+                    <div class="alert alert-warning mb-3" style="border-radius: 10px; border-left: 4px solid #ffc107;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Incomplete Profile</strong><br>
+                        <small>Please complete your profile before placing an order. Missing: <strong><?php echo implode(', ', $incompleteFields); ?></strong></small>
+                    </div>
+                    <?php endif; ?>
+                    
                     <div class="d-grid gap-2">
-                        <button type="submit" name="place_order" class="btn btn-success btn-lg">
+                        <button type="submit" name="place_order" class="btn btn-success btn-lg" <?php echo !$profileComplete ? 'disabled' : ''; ?>>
                             <i class="fas fa-check-circle me-2"></i>Place Order
                         </button>
+                        <?php if (!$profileComplete): ?>
+                        <a href="index.php?page=profile" class="btn btn-warning">
+                            <i class="fas fa-user me-2"></i>Complete Profile
+                        </a>
+                        <?php endif; ?>
                         <a href="index.php?page=cart" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Cart
                         </a>

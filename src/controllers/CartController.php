@@ -22,6 +22,9 @@ class CartController {
             exit();
         }
         
+        // Validate user still exists in database
+        Session::validateUserExists();
+        
         $customerId = Session::getUserId();
         $cartItems = $this->cartModel->getCartItems($customerId);
         $cartTotal = $this->cartModel->getCartTotal($customerId);

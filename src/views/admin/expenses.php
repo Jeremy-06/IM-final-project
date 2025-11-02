@@ -176,27 +176,6 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
     </div>
 </div>
 
-<!-- Toast Notification Container -->
-<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-    <div id="successToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
-        <div class="d-flex">
-            <div class="toast-body">
-                <i class="fas fa-check-circle me-2"></i><span id="successMessage"></span>
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-    
-    <div id="errorToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
-        <div class="d-flex">
-            <div class="toast-body">
-                <i class="fas fa-exclamation-circle me-2"></i><span id="errorMessage"></span>
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-</div>
-
 <script>
 function showDeleteModal(expenseId, description, amount) {
     // Set the content first
@@ -213,21 +192,6 @@ function showDeleteModal(expenseId, description, amount) {
         modal.show();
     }, 50);
 }
-
-// Show toast notifications for success/error messages
-document.addEventListener('DOMContentLoaded', function() {
-    <?php if (Session::getFlash('success')): ?>
-        document.getElementById('successMessage').textContent = '<?php echo addslashes(Session::getFlash('success')); ?>';
-        var successToast = new bootstrap.Toast(document.getElementById('successToast'));
-        successToast.show();
-    <?php endif; ?>
-    
-    <?php if (Session::getFlash('message')): ?>
-        document.getElementById('errorMessage').textContent = '<?php echo addslashes(Session::getFlash('message')); ?>';
-        var errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
-        errorToast.show();
-    <?php endif; ?>
-});
 </script>
 
 <?php

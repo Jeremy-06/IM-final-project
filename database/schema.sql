@@ -29,10 +29,24 @@ CREATE TABLE categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Suppliers Table
+CREATE TABLE suppliers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    supplier_name VARCHAR(255) NOT NULL UNIQUE,
+    contact_person VARCHAR(100),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_supplier_name (supplier_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Products Table
 CREATE TABLE products (
     id INT PRIMARY KEY AUTO_INCREMENT,
     category_id INT NOT NULL,
+    supplier_id INT DEFAULT NULL,
     product_name VARCHAR(255) NOT NULL,
     description TEXT,
     cost_price DECIMAL(10, 2) NOT NULL,
@@ -42,7 +56,9 @@ CREATE TABLE products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
     INDEX idx_category (category_id),
+    INDEX idx_supplier (supplier_id),
     INDEX idx_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -83,7 +99,7 @@ CREATE TABLE cart_items (
 -- Orders Table
 CREATE TABLE orders (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    customer_id INT NOT NULL,
+    customer_id INT,
     order_number VARCHAR(100) UNIQUE,
     order_status ENUM('pending', 'shipped', 'completed', 'cancelled') DEFAULT 'pending',
     subtotal DECIMAL(10, 2) NOT NULL,
@@ -92,7 +108,7 @@ CREATE TABLE orders (
     total_amount DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_customer (customer_id),
     INDEX idx_status (order_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -101,14 +117,50 @@ CREATE TABLE orders (
 CREATE TABLE order_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT NOT NULL,
-    product_id INT NOT NULL,
+    product_id INT,
     quantity INT NOT NULL,
     unit_price DECIMAL(10, 2) NOT NULL,
     item_total DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
     INDEX idx_order (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Order History Table (for backup of completed orders)
+CREATE TABLE order_history (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL UNIQUE,
+    customer_name VARCHAR(255),
+    customer_email VARCHAR(255),
+    total_amount DECIMAL(10, 2) NOT NULL,
+    items JSON NOT NULL,
+    order_status VARCHAR(50) DEFAULT 'completed',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_order_id (order_id),
+    INDEX idx_archived_at (archived_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Expenses Table
+CREATE TABLE expenses (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    expense_date DATE NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'cash',
+    receipt_number VARCHAR(100) DEFAULT NULL,
+    vendor_name VARCHAR(255) DEFAULT NULL,
+    supplier_id INT DEFAULT NULL,
+    notes TEXT DEFAULT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
+    INDEX idx_expense_date (expense_date),
+    INDEX idx_category (category)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Insert sample data

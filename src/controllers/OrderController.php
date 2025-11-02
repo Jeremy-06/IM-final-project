@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/Cart.php';
 require_once __DIR__ . '/../models/Product.php';
+require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../helpers/Session.php';
 require_once __DIR__ . '/../helpers/CSRF.php';
 
@@ -11,11 +12,13 @@ class OrderController {
     private $orderModel;
     private $cartModel;
     private $productModel;
+    private $userModel;
     
     public function __construct() {
         $this->orderModel = new Order();
         $this->cartModel = new Cart();
         $this->productModel = new Product();
+        $this->userModel = new User();
     }
     
     public function checkout() {
@@ -24,6 +27,9 @@ class OrderController {
             header('Location: index.php?page=login');
             exit();
         }
+        
+        // Validate user still exists in database
+        Session::validateUserExists();
         
         $customerId = Session::getUserId();
         // If the user submitted a selection from the cart, store it in session
@@ -83,6 +89,24 @@ class OrderController {
         }
         
         $customerId = Session::getUserId();
+        
+        // Validate user profile is complete
+        $userProfile = $this->userModel->findById($customerId);
+        $requiredFields = ['first_name', 'last_name', 'email', 'phone', 'address', 'city'];
+        $incompleteFields = [];
+        
+        foreach ($requiredFields as $field) {
+            if (empty($userProfile[$field])) {
+                $incompleteFields[] = $field;
+            }
+        }
+        
+        if (!empty($incompleteFields)) {
+            Session::setFlash('message', 'Please complete your profile before placing an order. Missing: ' . implode(', ', $incompleteFields));
+            header('Location: index.php?page=profile');
+            exit();
+        }
+        
         $cartItems = $this->cartModel->getCartItems($customerId);
         
         // Apply selection
@@ -172,6 +196,9 @@ class OrderController {
             exit();
         }
         
+        // Validate user still exists in database
+        Session::validateUserExists();
+        
         $customerId = Session::getUserId();
         $allOrders = $this->orderModel->getCustomerOrders($customerId);
         $orders = $allOrders; // Keep all orders for badge counts
@@ -198,6 +225,10 @@ class OrderController {
             header('Location: index.php?page=login');
             exit();
         }
+        
+        // Validate user still exists in database
+        Session::validateUserExists();
+        
         if (!isset($_GET['id'])) {
             header('Location: index.php?page=order_history');
             exit();
@@ -215,7 +246,28 @@ class OrderController {
             header('Location: index.php?page=order_history');
             exit();
         }
+        
         $orderItems = $this->orderModel->getOrderItems($orderId);
+        
+        // If no items found (all products deleted), try to get from order_history backup
+        if (empty($orderItems)) {
+            $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
+            foreach ($historyOrders as $ho) {
+                if ($ho['order_id'] == $orderId) {
+                    // Parse items from JSON backup
+                    $parsedItems = json_decode($ho['items'], true) ?? [];
+                    $orderItems = [];
+                    foreach ($parsedItems as $item) {
+                        $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                        $item['is_deleted'] = 1; // Mark as deleted
+                        $item['use_placeholder'] = true; // Show unavailable
+                        $orderItems[] = $item;
+                    }
+                    break;
+                }
+            }
+        }
+        
         include __DIR__ . '/../views/order_detail.php';
     }
     
@@ -237,6 +289,8 @@ class OrderController {
         
         // Verify order belongs to customer and mark as completed
         if ($this->orderModel->markAsCompleted($orderId, $customerId)) {
+            // Archive the completed order to history
+            $this->orderModel->archiveCompletedOrder($orderId);
             Session::setFlash('success', 'Order marked as received. Thank you!');
         } else {
             Session::setFlash('message', 'Failed to update order status');

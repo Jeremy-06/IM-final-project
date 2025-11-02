@@ -190,4 +190,11 @@ class User extends BaseModel {
         mysqli_stmt_bind_param($stmt, 'si', $passwordHash, $userId);
         return mysqli_stmt_execute($stmt);
     }
+    
+    public function countAdmins() {
+        $sql = "SELECT COUNT(*) as admin_count FROM users WHERE role = 'admin'";
+        $result = mysqli_query($this->conn, $sql);
+        $row = mysqli_fetch_assoc($result);
+        return (int)$row['admin_count'];
+    }
 }

@@ -32,6 +32,19 @@ Session::remove('form_data');
                     </div>
                     
                     <div class="form-group mb-3">
+                        <label for="supplier_id">Supplier</label>
+                        <select class="form-control" id="supplier_id" name="supplier_id">
+                            <option value="">Select Supplier (Optional)</option>
+                            <?php foreach ($suppliers as $supplier): ?>
+                                <option value="<?php echo $supplier['id']; ?>" 
+                                    <?php echo (isset($formData['supplier_id']) && $formData['supplier_id'] == $supplier['id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($supplier['supplier_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group mb-3">
                         <label for="product_name">Product Name</label>
                         <input type="text" class="form-control" id="product_name" name="product_name" 
                                placeholder="Enter product name" 

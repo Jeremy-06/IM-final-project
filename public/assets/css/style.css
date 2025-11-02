@@ -221,20 +221,16 @@ h3 {
   transition: all 0.3s ease;
 }
 
-.navbar-brand:hover .brand-logo {
-  transform: rotate(10deg) scale(1.1);
+/* Header logo rotation effect */
+.navbar-brand:hover .header-logo {
+  transform: rotate(360deg) scale(1.1);
   box-shadow: 0 4px 16px rgba(139, 95, 191, 0.5) !important;
 }
 
-/* Social Links Hover Effect */
-.social-links a {
-  transition: all 0.3s ease;
-  display: inline-block;
-}
-
-.social-links a:hover {
-  transform: translateY(-3px) scale(1.2);
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+/* Keep original hover for non-header logos */
+.navbar-brand:hover .brand-logo:not(.header-logo) {
+  transform: rotate(10deg) scale(1.1);
+  box-shadow: 0 4px 16px rgba(139, 95, 191, 0.5) !important;
 }
 
 /* Enhanced Hero Section Buttons */
@@ -927,6 +923,22 @@ footer.site-footer {
   width: 100%;
 }
 
+/* Footer brand logo hover effect */
+footer.site-footer .footer-logo {
+  transition: all 0.4s ease;
+}
+
+footer.site-footer .footer-logo:hover {
+  transform: rotate(360deg) scale(1.15);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Keep original hover for non-footer logos */
+footer.site-footer .brand-logo:not(.footer-logo):hover {
+  transform: rotate(360deg) scale(1.15);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4) !important;
+}
+
 /* Reduce spacing before footer */
 .main-content {
   padding-bottom: 1rem;
@@ -935,6 +947,36 @@ footer.site-footer {
 /* Admin footer override */
 body.admin-panel footer.site-footer {
   margin-top: auto;
+}
+
+/* Admin footer enhancements */
+footer.admin-footer {
+  background: linear-gradient(
+    135deg,
+    var(--purple-dark) 0%,
+    var(--purple-medium) 100%
+  );
+  box-shadow: 0 -4px 16px rgba(139, 95, 191, 0.3);
+  padding: 1.25rem 0;
+}
+
+footer.admin-footer .admin-footer-logo {
+  transition: all 0.4s ease;
+}
+
+footer.admin-footer .admin-footer-logo:hover {
+  transform: rotate(360deg) scale(1.1);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Fallback for admin footer logos without class */
+footer.admin-footer .brand-logo:not(.admin-footer-logo) {
+  transition: all 0.4s ease;
+}
+
+footer.admin-footer .brand-logo:not(.admin-footer-logo):hover {
+  transform: rotate(360deg) scale(1.1);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3) !important;
 }
 
 /* ============================================

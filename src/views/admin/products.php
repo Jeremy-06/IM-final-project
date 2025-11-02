@@ -9,9 +9,17 @@ require_once __DIR__ . '/../../helpers/Session.php';
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center">
             <h2 class="mb-0" style="margin-top: 0;">Manage Products</h2>
-            <a href="admin.php?page=create_product" class="btn btn-success">
-                <i class="fas fa-plus"></i> Add New Product
-            </a>
+            <div class="d-flex gap-2">
+                <a href="admin.php?page=create_product" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add New Product
+                </a>
+                <a href="admin.php?page=categories" class="btn btn-info">
+                    <i class="fas fa-tags"></i> Categories
+                </a>
+                <a href="admin.php?page=suppliers" class="btn btn-warning">
+                    <i class="fas fa-building"></i> Suppliers
+                </a>
+            </div>
         </div>
     </div>
 </div>

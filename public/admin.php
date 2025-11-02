@@ -53,6 +53,10 @@ switch ($page) {
         $controller->updateOrderStatus();
         break;
         
+    case 'generate_receipt':
+        $controller->generateReceipt();
+        break;
+        
     case 'customers':
         $controller->customers();
         break;
@@ -103,6 +107,22 @@ switch ($page) {
         
     case 'delete_expense':
         $controller->deleteExpense();
+        break;
+    
+    case 'suppliers':
+        $controller->suppliers();
+        break;
+        
+    case 'create_supplier':
+        $controller->createSupplier();
+        break;
+        
+    case 'edit_supplier':
+        $controller->editSupplier();
+        break;
+        
+    case 'delete_supplier':
+        $controller->deleteSupplier();
         break;
         
     case 'dashboard':

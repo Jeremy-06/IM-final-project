@@ -13,7 +13,7 @@ require_once __DIR__ . '/../helpers/Session.php';
     <title><?php echo $pageTitle ?? 'Admin - Lotus Plushies'; ?></title>
 </head>
 <body class="admin-panel page-wrapper">
-<nav class="navbar navbar-expand-lg navbar-dark admin-navbar">
+<nav class="navbar navbar-expand-lg navbar-dark admin-navbar" style="position: relative; z-index: 1050;">
     <div class="container-fluid">
         <a class="navbar-brand" href="admin.php">
             <i class="fas fa-user-shield"></i> Admin Panel
@@ -31,11 +31,6 @@ require_once __DIR__ . '/../helpers/Session.php';
                 <li class="nav-item">
                     <a class="nav-link" href="admin.php?page=products">
                         <i class="fas fa-box"></i> Products
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="admin.php?page=categories">
-                        <i class="fas fa-tags"></i> Categories
                     </a>
                 </li>
                 <li class="nav-item">
@@ -112,14 +107,16 @@ require_once __DIR__ . '/../helpers/Session.php';
         $flashSuccess = Session::getFlash('success');
         $flashError = Session::getFlash('message');
         if ($flashSuccess) {
-            echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>
-                    <strong>" . htmlspecialchars($flashSuccess) . "</strong>
+            echo "<div class='alert alert-dismissible fade show d-flex align-items-center mb-4' role='alert' style='background: #d4edda; border: none; border-left: 4px solid #28a745; border-radius: 10px; padding: 1rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 100%;'>
+                    <i class='fas fa-check-circle me-3' style='color: #28a745; font-size: 1.2rem;'></i>
+                    <span style='color: #155724; font-weight: 500; flex: 1;'>" . htmlspecialchars($flashSuccess) . "</span>
                     <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
                   </div>";
         }
         if ($flashError) {
-            echo "<div class='alert alert-danger alert-dismissible fade show' role='alert'>
-                    <strong>" . htmlspecialchars($flashError) . "</strong>
+            echo "<div class='alert alert-dismissible fade show d-flex align-items-center mb-4' role='alert' style='background: #f8d7da; border: none; border-left: 4px solid #dc3545; border-radius: 10px; padding: 1rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 100%;'>
+                    <i class='fas fa-exclamation-circle me-3' style='color: #dc3545; font-size: 1.2rem;'></i>
+                    <span style='color: #721c24; font-weight: 500; flex: 1;'>" . htmlspecialchars($flashError) . "</span>
                     <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
                   </div>";
         }
@@ -131,7 +128,15 @@ require_once __DIR__ . '/../helpers/Session.php';
 
 <footer class="site-footer admin-footer py-3 text-white">
     <div class="container text-center">
-        <p class="mb-0">&copy; <?php echo date('Y'); ?> Lotus Plushies Admin Panel. All rights reserved.</p>
+        <div class="mb-2">
+            <div class="d-inline-flex align-items-center justify-content-center mb-2">
+                <div class="brand-logo me-2 admin-footer-logo" style="width: 32px; height: 32px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);">
+                    <i class="fas fa-heart" style="color: var(--purple-dark); font-size: 0.95rem;"></i>
+                </div>
+                <span class="fw-bold" style="font-size: 1rem;">Lotus Plushies Admin</span>
+            </div>
+        </div>
+        <p class="mb-0" style="opacity: 0.9; font-size: 0.9rem;">&copy; <?php echo date('Y'); ?> Lotus Plushies Admin Panel. All rights reserved.</p>
     </div>
 </footer>
 

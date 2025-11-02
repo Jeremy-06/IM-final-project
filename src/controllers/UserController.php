@@ -24,9 +24,18 @@ class UserController {
             exit();
         }
         
+        // Validate user still exists in database
+        Session::validateUserExists();
+        
         $userId = Session::getUserId();
         $user = $this->userModel->findById($userId);
         $recentOrders = $this->orderModel->getCustomerOrders($userId);
+        
+        // If user is admin, get admin count for deletion protection info
+        $adminCount = 0;
+        if ($user['role'] === 'admin') {
+            $adminCount = $this->userModel->countAdmins();
+        }
         
         include __DIR__ . '/../views/profile.php';
     }
@@ -50,6 +59,10 @@ class UserController {
         }
         
         $userId = Session::getUserId();
+        
+        // Validate user still exists in database
+        Session::validateUserExists();
+        
         $firstName = trim($_POST['first_name'] ?? '');
         $lastName = trim($_POST['last_name'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
@@ -71,14 +84,15 @@ class UserController {
                 $this->userModel->updateProfilePicture($userId, $filename);
             } else {
                 Session::setFlash('message', $uploadResult['error']);
-                header('Location: index.php?page=profile');
-                exit();
             }
         }
         
+        // Update profile information
         if ($this->userModel->updateProfile($userId, $firstName, $lastName, $phone, $address, $city, $postalCode, $country)) {
             // Update session with new first name
-            Session::set('first_name', $firstName);
+            $_SESSION['first_name'] = $firstName;
+            $_SESSION['last_name'] = $lastName;
+            
             Session::setFlash('success', 'Profile updated successfully');
         } else {
             Session::setFlash('message', 'Failed to update profile');
@@ -88,7 +102,7 @@ class UserController {
         exit();
     }
     
-    public function changePassword() {
+    public function deleteAccount() {
         if (!Session::isLoggedIn()) {
             Session::setFlash('message', 'Please login first');
             header('Location: index.php?page=login');
@@ -107,38 +121,37 @@ class UserController {
         }
         
         $userId = Session::getUserId();
-        $currentPassword = $_POST['current_password'] ?? '';
-        $newPassword = $_POST['new_password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
-        
-        // Get user to verify current password
         $user = $this->userModel->findById($userId);
+        $emailConfirm = $_POST['email_confirm'] ?? '';
         
-        if (!password_verify($currentPassword, $user['password_hash'])) {
-            Session::setFlash('message', 'Current password is incorrect');
+        // Check if user is the last admin
+        if ($user['role'] === 'admin') {
+            $adminCount = $this->userModel->countAdmins();
+            if ($adminCount <= 1) {
+                Session::setFlash('message', 'Cannot delete your account. You are the only administrator in the system. At least one admin must remain to manage the system.');
+                header('Location: index.php?page=profile');
+                exit();
+            }
+        }
+        
+        // Verify email confirmation matches
+        if ($emailConfirm !== $user['email']) {
+            Session::setFlash('message', 'Email confirmation does not match. Account not deleted.');
             header('Location: index.php?page=profile');
             exit();
         }
         
-        if ($newPassword !== $confirmPassword) {
-            Session::setFlash('message', 'New passwords do not match');
-            header('Location: index.php?page=profile');
+        // Delete the account
+        if ($this->userModel->delete($userId)) {
+            // Clear session and redirect to home
+            Session::destroy();
+            Session::setFlash('success', 'Your account has been successfully deleted.');
+            header('Location: index.php');
             exit();
-        }
-        
-        if (strlen($newPassword) < 6) {
-            Session::setFlash('message', 'Password must be at least 6 characters');
-            header('Location: index.php?page=profile');
-            exit();
-        }
-        
-        if ($this->userModel->updatePassword($userId, $newPassword)) {
-            Session::setFlash('success', 'Password changed successfully');
         } else {
-            Session::setFlash('message', 'Failed to change password');
+            Session::setFlash('message', 'Failed to delete account. Please try again.');
+            header('Location: index.php?page=profile');
+            exit();
         }
-        
-        header('Location: index.php?page=profile');
-        exit();
     }
 }

@@ -71,6 +71,13 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
     </div>
 </div>
 
+<?php if ($adminCount <= 1): ?>
+<div class="alert alert-warning mb-3">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Note:</strong> You are the only admin in the system. At least one admin account must remain to manage the system.
+</div>
+<?php endif; ?>
+
 <?php if (!empty($users)): ?>
 <div class="table-responsive">
     <table class="table table-striped table-bordered table-hover">
@@ -124,7 +131,23 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                 </td>
                 <td><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
                 <td>
-                    <?php if ($u['id'] !== Session::getUserId()): ?>
+                    <?php 
+                    $canDelete = true;
+                    $disabledReason = '';
+                    
+                    // Check if it's the current user
+                    if ($u['id'] === Session::getUserId()) {
+                        $canDelete = false;
+                        $disabledReason = 'Cannot delete yourself';
+                    }
+                    // Check if it's the last admin
+                    elseif ($u['role'] === 'admin' && $adminCount <= 1) {
+                        $canDelete = false;
+                        $disabledReason = 'Cannot delete the last admin';
+                    }
+                    ?>
+                    
+                    <?php if ($canDelete): ?>
                     <div class="btn-group" role="group">
                         <a href="admin.php?page=edit_user&id=<?php echo $u['id']; ?>" 
                            class="btn btn-sm" 
@@ -141,9 +164,12 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                         </a>
                     </div>
                     <?php else: ?>
-                    <button class="btn btn-sm btn-outline-secondary" disabled title="Cannot delete yourself" style="border-radius: 20px; padding: 8px 16px;">
-                        <i class="fas fa-lock"></i>
-                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" disabled title="<?php echo htmlspecialchars($disabledReason); ?>" style="border-radius: 20px; padding: 8px 16px;">
+                            <i class="fas fa-lock"></i>
+                        </button>
+                        <small class="text-muted"><?php echo htmlspecialchars($disabledReason); ?></small>
+                    </div>
                     <?php endif; ?>
                 </td>
             </tr>

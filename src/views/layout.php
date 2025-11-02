@@ -23,7 +23,7 @@ if (Session::isLoggedIn()) {
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="index.php">
-            <div class="brand-logo me-2" style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--purple-dark) 0%, var(--pink-medium) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(139, 95, 191, 0.3);">
+            <div class="brand-logo me-2 header-logo" style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--purple-dark) 0%, var(--pink-medium) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(139, 95, 191, 0.3);">
                 <i class="fas fa-heart" style="color: white; font-size: 1.1rem;"></i>
             </div>
             <span style="font-size: 1.5rem;">Lotus Plushies</span>
@@ -113,15 +113,17 @@ if (Session::isLoggedIn()) {
         $flashSuccess = Session::getFlash('success');
         $flashError = Session::getFlash('message');
         if ($flashSuccess) {
-            echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>
-                    <strong>" . htmlspecialchars($flashSuccess) . "</strong>
-                    <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
+            echo "<div class='alert alert-dismissible fade show d-flex align-items-center' role='alert' style='background: #d4edda; border: none; border-left: 4px solid #28a745; border-radius: 10px; padding: 1rem 1.5rem;'>
+                    <i class='fas fa-check-circle me-3' style='color: #28a745; font-size: 1.2rem;'></i>
+                    <span style='color: #155724; font-weight: 500;'>" . htmlspecialchars($flashSuccess) . "</span>
+                    <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close' style='margin-left: auto;'></button>
                   </div>";
         }
         if ($flashError) {
-            echo "<div class='alert alert-danger alert-dismissible fade show' role='alert'>
-                    <strong>" . htmlspecialchars($flashError) . "</strong>
-                    <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
+            echo "<div class='alert alert-dismissible fade show d-flex align-items-center' role='alert' style='background: #f8d7da; border: none; border-left: 4px solid #dc3545; border-radius: 10px; padding: 1rem 1.5rem;'>
+                    <i class='fas fa-exclamation-circle me-3' style='color: #dc3545; font-size: 1.2rem;'></i>
+                    <span style='color: #721c24; font-weight: 500;'>" . htmlspecialchars($flashError) . "</span>
+                    <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close' style='margin-left: auto;'></button>
                   </div>";
         }
         ?>
@@ -130,26 +132,20 @@ if (Session::isLoggedIn()) {
     </div>
 </div>
 
-<footer class="site-footer py-4">
+<footer class="site-footer py-3">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
-                <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                    <div class="brand-logo me-2" style="width: 35px; height: 35px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
-                        <i class="fas fa-heart" style="color: var(--purple-dark); font-size: 1rem;"></i>
+        <div class="row align-items-center justify-content-center text-center">
+            <div class="col-12 mb-3">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="brand-logo me-3 footer-logo" style="width: 38px; height: 38px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                        <i class="fas fa-heart" style="color: var(--purple-dark); font-size: 1.1rem;"></i>
                     </div>
-                    <span class="fw-bold" style="font-size: 1.2rem;">Lotus Plushies</span>
+                    <span class="fw-bold" style="font-size: 1.3rem; letter-spacing: 0.5px;">Lotus Plushies</span>
                 </div>
             </div>
-            <div class="col-md-4 text-center mb-3 mb-md-0">
-                <p class="mb-0">&copy; <?php echo date('Y'); ?> Lotus Plushies. All rights reserved.</p>
-            </div>
-            <div class="col-md-4 text-center text-md-end">
-                <div class="social-links">
-                    <a href="#" class="text-white me-3" style="font-size: 1.2rem; transition: transform 0.3s ease;"><i class="fab fa-facebook"></i></a>
-                    <a href="#" class="text-white me-3" style="font-size: 1.2rem; transition: transform 0.3s ease;"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="text-white" style="font-size: 1.2rem; transition: transform 0.3s ease;"><i class="fab fa-twitter"></i></a>
-                </div>
+            <div class="col-12">
+                <p class="mb-1" style="font-size: 0.95rem; opacity: 0.95;">&copy; <?php echo date('Y'); ?> Lotus Plushies. All rights reserved.</p>
+                <p class="mb-0" style="font-size: 0.85rem; opacity: 0.85;">Bringing comfort and joy, one plushie at a time</p>
             </div>
         </div>
     </div>

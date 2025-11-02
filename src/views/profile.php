@@ -47,6 +47,22 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                 </div>
             </div>
         </div>
+        
+        <?php if ($user['role'] === 'admin' && $adminCount <= 1): ?>
+        <!-- Admin Deletion Protection Notice -->
+        <div class="alert alert-info d-flex align-items-start" style="border-radius: 15px; border: none; background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 202, 240, 0.1) 100%); border-left: 4px solid #0d6efd;">
+            <i class="fas fa-shield-alt me-3" style="font-size: 1.5rem; color: #0d6efd; margin-top: 2px;"></i>
+            <div>
+                <h6 class="mb-1" style="color: #0d6efd; font-weight: 600;">
+                    <i class="fas fa-info-circle me-1"></i>Protected Administrator Account
+                </h6>
+                <p class="mb-0" style="font-size: 0.9rem; color: #495057;">
+                    You are currently the only administrator in the system. Your account is protected and cannot be deleted to ensure continuous system management. 
+                    At least one administrator must remain to maintain the system.
+                </p>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
     
     <!-- Profile Information Form -->
@@ -239,6 +255,75 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                         </div>
                     </div>
                 </div>
+                
+                <!-- Delete Account Section (Only visible in edit mode) -->
+                <hr class="my-4" id="deleteAccountDivider" style="display: none;">
+                
+                <div id="deleteAccountSection" style="display: none;">
+                    <?php if ($user['role'] === 'admin' && $adminCount <= 1): ?>
+                    <!-- Last Admin - Cannot Delete -->
+                    <div class="alert alert-warning mb-3" style="border-radius: 10px;">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>Account Deletion Disabled:</strong> You are the only administrator in the system. Your account cannot be deleted to ensure continuous system management. At least one admin must remain to maintain the system.
+                    </div>
+                    <?php else: ?>
+                    <!-- Regular User or Non-Last Admin - Can Delete -->
+                    <div class="alert alert-danger mb-3" style="border-radius: 10px;">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone. Deleting your account will:
+                        <ul class="mb-0 mt-2">
+                            <li>Permanently remove your account and profile data</li>
+                            <li>Keep your order history for records (in case you placed orders)</li>
+                            <li>Remove your ability to login or access your account</li>
+                        </ul>
+                    </div>
+                    <p class="text-muted mb-3">
+                        If you're sure you want to delete your account permanently, click the button below. You'll be asked to confirm this action.
+                    </p>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-danger btn-lg" style="border-radius: 25px; padding: 12px 40px;" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                            <i class="fas fa-trash-alt me-2"></i>Delete My Account
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delete Account Modal -->
+        <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius: 15px; border: none;">
+                    <div class="modal-header" style="background: #dc3545; border: none;">
+                        <h5 class="modal-title" id="deleteAccountModalLabel" style="color: white;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Confirm Account Deletion
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">
+                            <strong>Are you absolutely sure?</strong> This action cannot be reversed.
+                        </p>
+                        <p class="text-muted mb-4">
+                            Your account will be permanently deleted along with all profile information. Your order history will be preserved for records.
+                        </p>
+                        <p class="mb-0">
+                            <small class="text-muted">Type your email address to confirm:</small>
+                        </p>
+                        <form id="deleteAccountForm" method="POST" action="index.php?page=profile&action=delete_account">
+                            <?php echo CSRF::getTokenField(); ?>
+                            <input type="text" id="emailConfirm" class="form-control mt-2" placeholder="<?php echo htmlspecialchars($user['email']); ?>" 
+                                   style="border: 2px solid #dc3545; border-radius: 10px;">
+                            <input type="hidden" name="email_confirm" id="emailConfirmInput">
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid #e9ecef;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn" style="border-radius: 10px;" disabled>
+                            <i class="fas fa-trash-alt me-2"></i>Yes, Delete My Account
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -337,6 +422,8 @@ function toggleEditMode() {
     isEditMode = !isEditMode;
     const editButton = document.getElementById('editButton');
     const saveContainer = document.getElementById('saveButtonContainer');
+    const deleteAccountSection = document.getElementById('deleteAccountSection');
+    const deleteAccountDivider = document.getElementById('deleteAccountDivider');
     const inputs = document.querySelectorAll('.profile-input');
     const profilePicture = document.getElementById('profile_picture');
     
@@ -353,6 +440,8 @@ function toggleEditMode() {
         editButton.classList.remove('btn-light');
         editButton.classList.add('btn-warning');
         saveContainer.style.display = 'block';
+        deleteAccountSection.style.display = 'block';
+        deleteAccountDivider.style.display = 'block';
     } else {
         // Disable editing (cancel)
         inputs.forEach(input => {
@@ -365,6 +454,8 @@ function toggleEditMode() {
         editButton.classList.remove('btn-warning');
         editButton.classList.add('btn-light');
         saveContainer.style.display = 'none';
+        deleteAccountSection.style.display = 'none';
+        deleteAccountDivider.style.display = 'none';
     }
 }
 
@@ -384,6 +475,28 @@ function cancelEdit() {
     isEditMode = true; // Set to true so toggle will switch to false
     toggleEditMode();
 }
+
+// Delete Account Confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const emailConfirmInput = document.getElementById('emailConfirm');
+    const emailConfirmHidden = document.getElementById('emailConfirmInput');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const userEmail = '<?php echo htmlspecialchars($user['email']); ?>';
+    
+    if (emailConfirmInput) {
+        emailConfirmInput.addEventListener('input', function() {
+            const entered = this.value.trim();
+            confirmDeleteBtn.disabled = entered !== userEmail;
+            emailConfirmHidden.value = entered;
+        });
+        
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (emailConfirmInput.value.trim() === userEmail) {
+                document.getElementById('deleteAccountForm').submit();
+            }
+        });
+    }
+});
 </script>
 
 <?php

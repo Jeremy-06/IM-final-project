@@ -10,6 +10,7 @@ require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Expense.php';
+require_once __DIR__ . '/../models/Supplier.php';
 
 class AdminController {
     private $productModel;
@@ -17,6 +18,7 @@ class AdminController {
     private $orderModel;
     private $userModel;
     private $expenseModel;
+    private $supplierModel;
 
     public function __construct() {
         $this->productModel = new Product();
@@ -24,6 +26,7 @@ class AdminController {
         $this->orderModel = new Order();
         $this->userModel = new User();
         $this->expenseModel = new Expense();
+        $this->supplierModel = new Supplier();
     }
 
     public function dashboard() {
@@ -78,6 +81,7 @@ class AdminController {
 
             // Create product first to get the product ID
             $imgPath = '';
+            $supplierId = !empty($_POST['supplier_id']) ? intval($_POST['supplier_id']) : null;
             
             try {
                 $created = $this->productModel->create(
@@ -86,6 +90,7 @@ class AdminController {
                     trim($_POST['description'] ?? ''),
                     floatval($_POST['cost_price']),
                     floatval($_POST['selling_price']),
+                    $supplierId,
                     $imgPath
                 );
 
@@ -106,6 +111,7 @@ class AdminController {
                             trim($_POST['description'] ?? ''),
                             floatval($_POST['cost_price']),
                             floatval($_POST['selling_price']),
+                            $supplierId,
                             $imgPath
                         );
                     } else {
@@ -135,7 +141,8 @@ class AdminController {
                             null, // receipt_number
                             null, // vendor_name
                             'Auto-generated expense for initial product stock',
-                            Session::get('user_id')
+                            Session::get('user_id'),
+                            $supplierId
                         );
                     }
                 }
@@ -149,6 +156,7 @@ class AdminController {
             exit();
         }
         $categories = $this->categoryModel->getActive();
+        $suppliers = $this->supplierModel->getAll();
         include __DIR__ . '/../views/admin/product_create.php';
     }
 
@@ -183,6 +191,7 @@ class AdminController {
             
             try {
                 $isActive = isset($_POST['is_active']) ? intval($_POST['is_active']) : 1;
+                $supplierId = !empty($_POST['supplier_id']) ? intval($_POST['supplier_id']) : null;
                 $ok = $this->productModel->update(
                     $id,
                     intval($_POST['category_id']),
@@ -190,6 +199,7 @@ class AdminController {
                     trim($_POST['description'] ?? ''),
                     floatval($_POST['cost_price']),
                     floatval($_POST['selling_price']),
+                    $supplierId,
                     $imgPath,
                     $isActive
                 );
@@ -222,7 +232,8 @@ class AdminController {
                             null, // receipt_number
                             null, // vendor_name
                             'Auto-generated expense for product restocking',
-                            Session::get('user_id')
+                            Session::get('user_id'),
+                            $supplierId
                         );
                     }
                 }
@@ -236,6 +247,7 @@ class AdminController {
         }
         $product = $this->productModel->findById($id);
         $categories = $this->categoryModel->getActive();
+        $suppliers = $this->supplierModel->getAll();
         $inventory = $this->productModel->getInventory($id);
         include __DIR__ . '/../views/admin/product_edit.php';
     }
@@ -268,7 +280,7 @@ class AdminController {
         $search = $_GET['search'] ?? '';
         $status = $_GET['status'] ?? '';
         
-        // Get filtered orders for display
+        // Get filtered orders for display (all from main orders table)
         if (!empty($search)) {
             $orders = $this->orderModel->searchOrders($search, $status);
         } elseif (!empty($status)) {
@@ -289,8 +301,81 @@ class AdminController {
             exit();
         }
         $orderId = intval($_GET['id']);
+        
+        // Try to get from regular orders table first
         $order = $this->orderModel->getOrderDetails($orderId);
-        $orderItems = $this->orderModel->getOrderItems($orderId);
+        
+        // If not found, try to get from order_history (archived orders)
+        if (!$order) {
+            $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
+            foreach ($historyOrders as $ho) {
+                if ($ho['id'] == $orderId) {
+                    // Parse customer name into first_name and last_name
+                    $nameParts = explode(' ', $ho['customer_name'], 2);
+                    $firstName = $nameParts[0] ?? '';
+                    $lastName = $nameParts[1] ?? '';
+                    
+                    // Convert history format to orders format
+                    $order = [
+                        'id' => $ho['id'],
+                        'order_number' => 'HIST-' . $ho['order_id'],
+                        'customer_name' => $ho['customer_name'],
+                        'email' => $ho['customer_email'],  // Map customer_email to email
+                        'customer_email' => $ho['customer_email'],
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'phone' => null,  // Not stored in history
+                        'address' => null,  // Not stored in history
+                        'city' => null,  // Not stored in history
+                        'postal_code' => null,  // Not stored in history
+                        'country' => null,  // Not stored in history
+                        'total_amount' => $ho['total_amount'],
+                        'created_at' => $ho['created_at'],
+                        'order_status' => 'completed'
+                    ];
+                    // Parse items from JSON and calculate item_total for each
+                    $parsedItems = json_decode($ho['items'], true) ?? [];
+                    $orderItems = [];
+                    foreach ($parsedItems as $item) {
+                        $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                        $orderItems[] = $item;
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // If still not found
+        if (!$order) {
+            Session::setFlash('message', 'Order not found');
+            header('Location: admin.php?page=orders');
+            exit();
+        }
+        
+        // Get order items if not already set
+        if (!isset($orderItems)) {
+            $orderItems = $this->orderModel->getOrderItems($orderId);
+            
+            // If no items found (all products deleted), try to get from order_history backup
+            if (empty($orderItems)) {
+                $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
+                foreach ($historyOrders as $ho) {
+                    if ($ho['order_id'] == $orderId) {
+                        // Parse items from JSON backup
+                        $parsedItems = json_decode($ho['items'], true) ?? [];
+                        $orderItems = [];
+                        foreach ($parsedItems as $item) {
+                            $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                            $item['is_deleted'] = 1; // Mark as deleted since we got from history
+                            $item['use_placeholder'] = true; // Show unavailable
+                            $orderItems[] = $item;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        
         include __DIR__ . '/../views/admin/order_detail.php';
     }
 
@@ -315,6 +400,26 @@ class AdminController {
         exit();
     }
 
+    public function generateReceipt() {
+        if (!isset($_GET['id'])) {
+            Session::setFlash('message', 'Invalid order');
+            header('Location: admin.php?page=orders');
+            exit();
+        }
+        
+        $orderId = intval($_GET['id']);
+        $order = $this->orderModel->getOrderDetails($orderId);
+        $orderItems = $this->orderModel->getOrderItems($orderId);
+        
+        if (!$order) {
+            Session::setFlash('message', 'Order not found');
+            header('Location: admin.php?page=orders');
+            exit();
+        }
+        
+        include __DIR__ . '/../views/admin/receipt.php';
+    }
+
     public function customers() {
         $customers = $this->userModel->getAllCustomers();
         include __DIR__ . '/../views/admin/customers.php';
@@ -327,6 +432,8 @@ class AdminController {
         $roleFilter = $_GET['role'] ?? '';
         
         $users = $this->userModel->searchAndSortUsers($search, $sortBy, $sortOrder, $roleFilter);
+        $adminCount = $this->userModel->countAdmins();
+        
         include __DIR__ . '/../views/admin/users.php';
     }
 
@@ -362,19 +469,65 @@ class AdminController {
             exit();
         }
         $id = intval($_GET['id']);
+        
         // Prevent self-deletion for safety
         if ($id === Session::getUserId()) {
             Session::setFlash('message', 'You cannot delete your own account');
             header('Location: admin.php?page=users');
             exit();
         }
+        
+        // Check if the user being deleted is an admin
+        $userToDelete = $this->userModel->findById($id);
+        if ($userToDelete && $userToDelete['role'] === 'admin') {
+            // Check if this is the last admin
+            $adminCount = $this->userModel->countAdmins();
+            if ($adminCount <= 1) {
+                Session::setFlash('message', 'Cannot delete the last admin account. At least one admin must remain in the system.');
+                header('Location: admin.php?page=users');
+                exit();
+            }
+        }
+        
+        // Check if user has pending orders
+        $pendingOrders = $this->orderModel->getOrdersByCustomerAndStatus($id, ['pending', 'processing', 'shipped', 'delivered']);
+        if (!empty($pendingOrders)) {
+            Session::setFlash('message', 'Cannot delete user with active orders. Wait until all orders are completed or cancel them first.');
+            header('Location: admin.php?page=users');
+            exit();
+        }
+        
         if ($this->userModel->delete($id)) {
+            // Force logout the deleted user by destroying their session
+            $this->destroyUserSessions($id);
+            
             Session::setFlash('success', 'User deleted');
         } else {
             Session::setFlash('message', 'Failed to delete user');
         }
         header('Location: admin.php?page=users');
         exit();
+    }
+    
+    // Helper function to destroy all sessions for a specific user
+    private function destroyUserSessions($userId) {
+        $sessionPath = session_save_path();
+        if (empty($sessionPath)) {
+            $sessionPath = sys_get_temp_dir();
+        }
+        
+        // Scan all session files
+        $sessionFiles = glob($sessionPath . '/sess_*');
+        if ($sessionFiles) {
+            foreach ($sessionFiles as $sessionFile) {
+                $sessionData = file_get_contents($sessionFile);
+                // Check if this session belongs to the deleted user
+                if (strpos($sessionData, 'user_id";i:' . $userId . ';') !== false) {
+                    // Delete the session file
+                    @unlink($sessionFile);
+                }
+            }
+        }
     }
 
     // Category CRUD Methods
@@ -508,6 +661,11 @@ class AdminController {
                 // Always use current date if no specific date is provided
                 $date = isset($_GET['date']) && !empty($_GET['date']) ? $_GET['date'] : date('Y-m-d');
                 $salesData = $this->orderModel->getDailySales($date);
+                // Also include archived data from order_history
+                $archivedData = $this->orderModel->getSalesReportFromHistory($date, $date);
+                if (!empty($archivedData)) {
+                    $salesData = array_merge($salesData ?? [], $archivedData);
+                }
                 $reportTitle = 'Daily Sales Report';
                 $reportPeriod = date('F d, Y', strtotime($date));
                 $startDate = $date . ' 00:00:00';
@@ -516,27 +674,46 @@ class AdminController {
                 
             case 'weekly':
                 $salesData = $this->orderModel->getWeeklySales();
+                // Include archived data
+                $weekStart = date('Y-m-d', strtotime('monday this week'));
+                $weekEnd = date('Y-m-d', strtotime('sunday this week'));
+                $archivedData = $this->orderModel->getSalesReportFromHistory($weekStart, $weekEnd);
+                if (!empty($archivedData)) {
+                    $salesData = array_merge($salesData ?? [], $archivedData);
+                }
                 $reportTitle = 'Weekly Sales Report';
-                $weekStart = date('M d, Y', strtotime('monday this week'));
-                $weekEnd = date('M d, Y', strtotime('sunday this week'));
-                $reportPeriod = "$weekStart - $weekEnd";
-                $startDate = date('Y-m-d 00:00:00', strtotime('monday this week'));
-                $endDate = date('Y-m-d 23:59:59', strtotime('sunday this week'));
+                $reportPeriodStart = date('M d, Y', strtotime('monday this week'));
+                $reportPeriodEnd = date('M d, Y', strtotime('sunday this week'));
+                $reportPeriod = "$reportPeriodStart - $reportPeriodEnd";
+                $startDate = $weekStart . ' 00:00:00';
+                $endDate = $weekEnd . ' 23:59:59';
                 break;
                 
             case 'monthly':
                 $month = $_GET['month'] ?? date('m');
                 $year = $_GET['year'] ?? date('Y');
                 $salesData = $this->orderModel->getMonthlySales($month, $year);
+                // Include archived data
+                $monthStart = "$year-$month-01";
+                $monthEnd = date('Y-m-t', strtotime($monthStart));
+                $archivedData = $this->orderModel->getSalesReportFromHistory($monthStart, $monthEnd);
+                if (!empty($archivedData)) {
+                    $salesData = array_merge($salesData ?? [], $archivedData);
+                }
                 $reportTitle = 'Monthly Sales Report';
                 $reportPeriod = date('F Y', strtotime("$year-$month-01"));
-                $startDate = "$year-$month-01 00:00:00";
-                $endDate = date('Y-m-t 23:59:59', strtotime($startDate));
+                $startDate = "$monthStart 00:00:00";
+                $endDate = "$monthEnd 23:59:59";
                 break;
                 
             case 'yearly':
                 $year = $_GET['year'] ?? date('Y');
                 $salesData = $this->orderModel->getYearlySales($year);
+                // Include archived data
+                $archivedData = $this->orderModel->getSalesReportFromHistory("$year-01-01", "$year-12-31");
+                if (!empty($archivedData)) {
+                    $salesData = array_merge($salesData ?? [], $archivedData);
+                }
                 $reportTitle = 'Yearly Sales Report';
                 $reportPeriod = $year;
                 $startDate = "$year-01-01 00:00:00";
@@ -546,6 +723,11 @@ class AdminController {
             case 'custom':
                 if ($customStart && $customEnd) {
                     $salesData = $this->orderModel->getCustomRangeSales($customStart, $customEnd);
+                    // Include archived data
+                    $archivedData = $this->orderModel->getSalesReportFromHistory($customStart, $customEnd);
+                    if (!empty($archivedData)) {
+                        $salesData = array_merge($salesData ?? [], $archivedData);
+                    }
                     $reportTitle = 'Custom Range Sales Report';
                     $reportPeriod = date('M d, Y', strtotime($customStart)) . ' - ' . date('M d, Y', strtotime($customEnd));
                     $startDate = date('Y-m-d 00:00:00', strtotime($customStart));
@@ -699,6 +881,135 @@ class AdminController {
         header('Location: admin.php?page=expenses');
         exit();
     }
+
+    // ========== SUPPLIER CRUD METHODS ==========
     
+    public function suppliers() {
+        $search = $_GET['search'] ?? '';
+        
+        if (!empty($search)) {
+            $suppliers = $this->supplierModel->search($search);
+        } else {
+            $suppliers = $this->supplierModel->getAll();
+        }
+        
+        // Add product count for each supplier
+        foreach ($suppliers as &$supplier) {
+            $supplier['product_count'] = $this->supplierModel->getProductCount($supplier['id']);
+        }
+        
+        include __DIR__ . '/../views/admin/suppliers.php';
+    }
+    
+    public function createSupplier() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('message', 'Invalid request');
+                header('Location: admin.php?page=create_supplier');
+                exit();
+            }
+            
+            $validator = new Validation();
+            $validator->required('supplier_name', $_POST['supplier_name'] ?? '');
+            
+            if ($validator->hasErrors()) {
+                Session::setFlash('message', 'Supplier name is required');
+                header('Location: admin.php?page=create_supplier');
+                exit();
+            }
+            
+            $supplierName = trim($_POST['supplier_name']);
+            $contactPerson = trim($_POST['contact_person'] ?? '');
+            $phone = trim($_POST['phone'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $address = trim($_POST['address'] ?? '');
+            
+            if ($this->supplierModel->create($supplierName, $contactPerson, $phone, $email, $address)) {
+                Session::setFlash('success', 'Supplier created successfully');
+                header('Location: admin.php?page=suppliers');
+            } else {
+                Session::setFlash('message', 'Failed to create supplier. Name may already exist.');
+                header('Location: admin.php?page=create_supplier');
+            }
+            exit();
+        }
+        
+        include __DIR__ . '/../views/admin/supplier_create.php';
+    }
+    
+    public function editSupplier() {
+        if (!isset($_GET['id'])) {
+            header('Location: admin.php?page=suppliers');
+            exit();
+        }
+        
+        $id = intval($_GET['id']);
+        $supplier = $this->supplierModel->findById($id);
+        
+        if (!$supplier) {
+            Session::setFlash('message', 'Supplier not found');
+            header('Location: admin.php?page=suppliers');
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
+                Session::setFlash('message', 'Invalid request');
+                header('Location: admin.php?page=edit_supplier&id=' . $id);
+                exit();
+            }
+            
+            $validator = new Validation();
+            $validator->required('supplier_name', $_POST['supplier_name'] ?? '');
+            
+            if ($validator->hasErrors()) {
+                Session::setFlash('message', 'Supplier name is required');
+                header('Location: admin.php?page=edit_supplier&id=' . $id);
+                exit();
+            }
+            
+            $supplierName = trim($_POST['supplier_name']);
+            $contactPerson = trim($_POST['contact_person'] ?? '');
+            $phone = trim($_POST['phone'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $address = trim($_POST['address'] ?? '');
+            
+            if ($this->supplierModel->update($id, $supplierName, $contactPerson, $phone, $email, $address)) {
+                Session::setFlash('success', 'Supplier updated successfully');
+                header('Location: admin.php?page=suppliers');
+            } else {
+                Session::setFlash('message', 'Failed to update supplier. Name may already exist.');
+                header('Location: admin.php?page=edit_supplier&id=' . $id);
+            }
+            exit();
+        }
+        
+        include __DIR__ . '/../views/admin/supplier_edit.php';
+    }
+    
+    public function deleteSupplier() {
+        if (!isset($_GET['id'])) {
+            header('Location: admin.php?page=suppliers');
+            exit();
+        }
+        
+        $id = intval($_GET['id']);
+        $productCount = $this->supplierModel->getProductCount($id);
+        
+        if ($productCount > 0) {
+            Session::setFlash('message', 'Cannot delete supplier with associated products');
+            header('Location: admin.php?page=suppliers');
+            exit();
+        }
+        
+        if ($this->supplierModel->delete($id)) {
+            Session::setFlash('success', 'Supplier deleted successfully');
+        } else {
+            Session::setFlash('message', 'Failed to delete supplier');
+        }
+        
+        header('Location: admin.php?page=suppliers');
+        exit();
+    }
 
 }

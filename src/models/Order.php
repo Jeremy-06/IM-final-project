@@ -58,7 +58,16 @@ class Order extends BaseModel {
     }
     
     public function getOrderDetails($orderId) {
-        $sql = "SELECT o.*, u.email 
+        $sql = "SELECT o.*, 
+                u.email, 
+                u.first_name, 
+                u.last_name, 
+                u.phone, 
+                u.address, 
+                u.city, 
+                u.postal_code, 
+                u.country,
+                u.profile_picture
                 FROM orders o 
                 INNER JOIN users u ON o.customer_id = u.id 
                 WHERE o.id = ? LIMIT 1";
@@ -70,10 +79,8 @@ class Order extends BaseModel {
     }
     
     public function getOrderItems($orderId) {
-        // Use snapshot data from order_items, with fallback to products table if product still exists
-        $sql = "SELECT oi.*, 
-                COALESCE(oi.product_name, p.product_name, 'Deleted Product') as product_name,
-                COALESCE(oi.product_image, p.img_path, '') as img_path
+        // Get order items with product info (if product still exists)
+        $sql = "SELECT oi.*, p.is_active, p.product_name as current_name, p.img_path as current_image
                 FROM order_items oi 
                 LEFT JOIN products p ON oi.product_id = p.id 
                 WHERE oi.order_id = ?";
@@ -81,7 +88,21 @@ class Order extends BaseModel {
         mysqli_stmt_bind_param($stmt, 'i', $orderId);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $items = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        
+        foreach ($items as &$item) {
+            // Use snapshot name/image, fallback to current if available
+            $item['product_name'] = $item['product_name'] ?: ($item['current_name'] ?: 'Deleted Product');
+            $item['img_path'] = $item['product_image'] ?: ($item['current_image'] ?: '');
+            
+            // is_deleted: product doesn't exist in products table anymore
+            $item['is_deleted'] = empty($item['current_name']) ? 1 : 0;
+            
+            // Show unavailable if: product deleted OR inactive
+            $item['use_placeholder'] = $item['is_deleted'] || $item['is_active'] == 0;
+        }
+        
+        return $items;
     }
     
     public function getAllOrders() {
@@ -135,6 +156,24 @@ class Order extends BaseModel {
         } else {
             mysqli_stmt_bind_param($stmt, 'sss', $searchTerm, $searchTerm, $searchTerm);
         }
+        
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    public function getOrdersByCustomerAndStatus($customerId, $statuses) {
+        // Get orders for a customer with specific statuses
+        $placeholders = implode(',', array_fill(0, count($statuses), '?'));
+        $sql = "SELECT * FROM orders 
+                WHERE customer_id = ? AND order_status IN ($placeholders)";
+        
+        $stmt = mysqli_prepare($this->conn, $sql);
+        
+        // Bind parameters dynamically
+        $types = 'i' . str_repeat('s', count($statuses));
+        $params = array_merge([$customerId], $statuses);
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
         
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
@@ -233,19 +272,20 @@ class Order extends BaseModel {
     public function getTopSellingProducts($startDate = null, $endDate = null, $limit = 10) {
         $sql = "SELECT 
                 oi.product_name,
-                oi.product_image,
+                COALESCE(NULLIF(oi.product_image, ''), p.img_path) as product_image,
                 SUM(oi.quantity) as total_quantity,
                 SUM(oi.item_total) as total_revenue,
                 COUNT(DISTINCT oi.order_id) as order_count
                 FROM order_items oi
                 INNER JOIN orders o ON oi.order_id = o.id
+                LEFT JOIN products p ON oi.product_id = p.id
                 WHERE o.order_status = 'completed'";
         
         if ($startDate && $endDate) {
             $sql .= " AND o.created_at >= ? AND o.created_at <= ?";
         }
         
-        $sql .= " GROUP BY oi.product_id, oi.product_name, oi.product_image
+        $sql .= " GROUP BY oi.product_id, oi.product_name, COALESCE(NULLIF(oi.product_image, ''), p.img_path)
                   ORDER BY total_quantity DESC
                   LIMIT ?";
         
@@ -274,6 +314,143 @@ class Order extends BaseModel {
                 ORDER BY o.created_at DESC";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, 'ss', $startDate, $endDate);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    // Archive completed order to history table
+    public function archiveCompletedOrder($orderId) {
+        try {
+            // Get order details
+            $orderSql = "SELECT o.id, o.total_amount, o.created_at, u.first_name, u.last_name, u.email 
+                        FROM orders o 
+                        LEFT JOIN users u ON o.customer_id = u.id 
+                        WHERE o.id = ?";
+            
+            $orderStmt = mysqli_prepare($this->conn, $orderSql);
+            mysqli_stmt_bind_param($orderStmt, 'i', $orderId);
+            mysqli_stmt_execute($orderStmt);
+            $orderResult = mysqli_stmt_get_result($orderStmt);
+            $order = mysqli_fetch_assoc($orderResult);
+            
+            if (!$order) return false;
+            
+            // Get order items
+            $itemsSql = "SELECT product_name, quantity, unit_price FROM order_items WHERE order_id = ?";
+            $itemsStmt = mysqli_prepare($this->conn, $itemsSql);
+            mysqli_stmt_bind_param($itemsStmt, 'i', $orderId);
+            mysqli_stmt_execute($itemsStmt);
+            $itemsResult = mysqli_stmt_get_result($itemsStmt);
+            $items = mysqli_fetch_all($itemsResult, MYSQLI_ASSOC);
+            
+            // Format items as JSON
+            $itemsJson = json_encode($items);
+            $customerName = ($order['first_name'] ?? '') . ' ' . ($order['last_name'] ?? '');
+            
+            // Save to history table
+            $historySql = "INSERT INTO order_history (order_id, customer_name, customer_email, total_amount, items, created_at) 
+                          VALUES (?, ?, ?, ?, ?, ?)";
+            
+            $historyStmt = mysqli_prepare($this->conn, $historySql);
+            mysqli_stmt_bind_param($historyStmt, 'issdss', 
+                $orderId, 
+                $customerName, 
+                $order['email'], 
+                $order['total_amount'], 
+                $itemsJson, 
+                $order['created_at']
+            );
+            
+            return mysqli_stmt_execute($historyStmt);
+            
+        } catch (Exception $e) {
+            error_log("Archive error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Get completed orders from history (works even if user/product deleted)
+    public function getCompletedOrdersFromHistory($limit = 50) {
+        $sql = "SELECT * FROM order_history ORDER BY created_at DESC LIMIT ?";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'i', $limit);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    // Get sales report from history (includes deleted users/products)
+    public function getSalesReportFromHistory($startDate = null, $endDate = null) {
+        $sql = "SELECT 
+                DATE(created_at) as sale_date,
+                COUNT(*) as total_orders,
+                SUM(total_amount) as total_sales,
+                AVG(total_amount) as avg_order_value,
+                COUNT(DISTINCT customer_email) as unique_customers
+                FROM order_history";
+        
+        if ($startDate && $endDate) {
+            $sql .= " WHERE created_at >= ? AND created_at <= ?";
+        }
+        
+        $sql .= " GROUP BY DATE(created_at) ORDER BY created_at DESC";
+        
+        $stmt = mysqli_prepare($this->conn, $sql);
+        
+        if ($startDate && $endDate) {
+            mysqli_stmt_bind_param($stmt, 'ss', $startDate, $endDate);
+        }
+        
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    // Get total sales from history
+    public function getTotalSalesFromHistory($startDate = null, $endDate = null) {
+        $sql = "SELECT 
+                COUNT(*) as total_orders,
+                SUM(total_amount) as total_revenue,
+                AVG(total_amount) as avg_order_value,
+                COUNT(DISTINCT customer_email) as total_customers
+                FROM order_history";
+        
+        if ($startDate && $endDate) {
+            $sql .= " WHERE created_at >= ? AND created_at <= ?";
+        }
+        
+        $stmt = mysqli_prepare($this->conn, $sql);
+        
+        if ($startDate && $endDate) {
+            mysqli_stmt_bind_param($stmt, 'ss', $startDate, $endDate);
+        }
+        
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_assoc($result);
+    }
+    
+    // Get top products sold from history
+    public function getTopProductsFromHistory($limit = 10) {
+        $sql = "SELECT 
+                JSON_UNQUOTE(JSON_EXTRACT(oi.item, '$.product_name')) as product_name,
+                SUM(CAST(JSON_EXTRACT(oi.item, '$.quantity') AS DECIMAL)) as total_quantity,
+                SUM(CAST(JSON_EXTRACT(oi.item, '$.unit_price') AS DECIMAL) * 
+                    CAST(JSON_EXTRACT(oi.item, '$.quantity') AS DECIMAL)) as total_revenue
+                FROM order_history oh
+                CROSS JOIN JSON_TABLE(
+                    oh.items,
+                    '$[*]' COLUMNS (
+                        item JSON PATH '$'
+                    )
+                ) oi
+                GROUP BY product_name
+                ORDER BY total_revenue DESC
+                LIMIT ?";
+        
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'i', $limit);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
