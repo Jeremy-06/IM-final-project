@@ -73,7 +73,7 @@ require_once __DIR__ . '/../helpers/Session.php';
                             ?>
                         </span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 220px;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 220px; z-index: 99999 !important; position: absolute !important;">
                         <li class="px-3 py-3 border-bottom">
                             <div class="d-flex align-items-center">
                                 <div class="user-avatar me-2" style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5fbf 0%, #b19cd9 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">

@@ -197,6 +197,16 @@ h3 {
   border-bottom: 3px solid rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 100;
+  overflow: visible !important;
+}
+
+.navbar .container-fluid,
+.navbar .navbar-collapse,
+.navbar .navbar-nav {
+  overflow: visible !important;
+  position: static !important;
 }
 
 .navbar:hover {
@@ -1161,24 +1171,66 @@ a:hover {
 .dropdown-menu {
   border-radius: 15px;
   border: 2px solid var(--purple-medium);
-  box-shadow: 0 4px 12px rgba(139, 95, 191, 0.25);
+  box-shadow: 0 4px 12px rgba(139, 95, 191, 0.25) !important;
   padding: 0.5rem;
   transition: all 0.3s ease;
+  z-index: 999999 !important;
+  position: absolute !important;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.dropdown-menu.show {
+  z-index: 999999 !important;
+  position: absolute !important;
 }
 
 .dropdown-menu:hover {
-  box-shadow: 0 6px 20px rgba(139, 95, 191, 0.4);
+  box-shadow: 0 6px 20px rgba(139, 95, 191, 0.4) !important;
 }
 
 .dropdown-item {
   border-radius: 10px;
   padding: 0.5rem 1rem;
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 999999;
 }
 
 .dropdown-item:hover {
   background: var(--purple-medium);
   color: white;
+}
+
+/* Ensure dropdown parent has proper positioning */
+.nav-item.dropdown {
+  position: relative;
+  z-index: 999999;
+}
+
+.navbar .dropdown-menu {
+  z-index: 999999 !important;
+  position: absolute !important;
+}
+
+/* Override any Bootstrap or other z-index conflicts */
+.navbar-nav .dropdown-menu {
+  z-index: 999999 !important;
+  position: absolute !important;
+}
+
+/* Ensure all content below navbar has lower z-index */
+.main-content,
+.main-content * {
+  position: relative;
+  z-index: 1;
+}
+
+.card,
+.container,
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ============================================
