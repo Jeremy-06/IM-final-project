@@ -6,6 +6,7 @@ require_once __DIR__ . '/../models/Product.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../helpers/Session.php';
 require_once __DIR__ . '/../helpers/CSRF.php';
+require_once __DIR__ . '/../helpers/MailHelper.php';
 
 class OrderController {
     
@@ -71,6 +72,11 @@ class OrderController {
     }
     
     public function placeOrder() {
+        // Debug: Log that placeOrder was called
+        $logFile = __DIR__ . '/../../public/email_debug.log';
+        $logMessage = date('Y-m-d H:i:s') . " - OrderController: placeOrder method called\n";
+        file_put_contents($logFile, $logMessage, FILE_APPEND);
+        
         if (!Session::isLoggedIn()) {
             header('Location: index.php?page=login');
             exit();
@@ -148,6 +154,28 @@ class OrderController {
                 $currentQty = $this->productModel->getInventory($item['product_id']);
                 $newQty = $currentQty - $item['quantity'];
                 $this->productModel->updateInventory($item['product_id'], $newQty);
+            }
+            
+            // Send order confirmation email
+            $orderDetails = $this->orderModel->getOrderDetails($orderId);
+            $orderItems = $this->orderModel->getOrderItems($orderId);
+            $customerName = $userProfile['first_name'] . ' ' . $userProfile['last_name'];
+            
+            $logMessage = date('Y-m-d H:i:s') . " - OrderController: About to send email for order {$orderDetails['order_number']}\n";
+            file_put_contents($logFile, $logMessage, FILE_APPEND);
+            
+            // Debug: Log email attempt to file
+            $logMessage = date('Y-m-d H:i:s') . " - Attempting to send order email for Order Number: {$orderDetails['order_number']} to: " . $userProfile['email'] . "\n";
+            file_put_contents($logFile, $logMessage, FILE_APPEND);
+            
+            $emailResult = MailHelper::sendOrderSummary($userProfile['email'], $customerName, $orderDetails, $orderItems);
+            
+            if ($emailResult) {
+                $logMessage = date('Y-m-d H:i:s') . " - Email sent successfully for Order Number: {$orderDetails['order_number']}\n";
+                file_put_contents($logFile, $logMessage, FILE_APPEND);
+            } else {
+                $logMessage = date('Y-m-d H:i:s') . " - Email sending failed for Order Number: {$orderDetails['order_number']}\n";
+                file_put_contents($logFile, $logMessage, FILE_APPEND);
             }
             
             // Clear selected items from cart (or all if no selection)

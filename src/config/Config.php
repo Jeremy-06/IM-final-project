@@ -26,4 +26,21 @@ class Config {
     
     // Session configuration
     const SESSION_LIFETIME = 3600; // 1 hour
+    
+    // Email configuration (Gmail SMTP for real delivery)
+    const SMTP_HOST = 'smtp.gmail.com';
+    const SMTP_PORT = 587;
+    const SMTP_USERNAME = 'lotusplushies@gmail.com';
+    const SMTP_PASSWORD = 'qous amyy fxkr iajo'; // Gmail App Password
+    const SMTP_ENCRYPTION = 'tls';
+    const FROM_EMAIL = 'lotusplushies@gmail.com';
+    const FROM_NAME = 'Lotus Plushies';
+    
+    // Mailtrap configuration (for testing copies)
+    const MAILTRAP_HOST = 'sandbox.smtp.mailtrap.io';
+    const MAILTRAP_PORT = 2525;
+    const MAILTRAP_USERNAME = '1ca49ddcd339a7';
+    const MAILTRAP_PASSWORD = 'c4940aa32db690';
+    const MAILTRAP_ENCRYPTION = 'tls';
+    const TEST_EMAIL = 'test@lotusplushies.mailtrap.io'; // Mailtrap test inbox
 }
