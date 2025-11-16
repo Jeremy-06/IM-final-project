@@ -7,7 +7,7 @@ require_once __DIR__ . '/../helpers/CSRF.php';
 ?>
 
 <div class="row mb-4">
-    <div class="col-md-12">
+    <div class="col-md-12 ps-3">
         <h2 class="mb-0" style="margin-top: 0;">
             <i class="fas fa-shopping-cart me-2"></i>Shopping Cart
         </h2>
@@ -95,7 +95,7 @@ require_once __DIR__ . '/../helpers/CSRF.php';
         </div>
         
         <div class="col-md-4">
-            <div class="card shadow-sm sticky-top" style="top: 20px;">
+            <div class="card shadow-sm">
                 <div class="card-body">
                     <h4 class="card-title mb-4">
                         <i class="fas fa-receipt me-2"></i>Order Summary

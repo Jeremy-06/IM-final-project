@@ -35,6 +35,7 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
         <?php
         $statusConfig = [
             'pending' => ['color' => '#ffc107', 'icon' => 'fa-clock', 'label' => 'Pending'],
+            'processing' => ['color' => '#17a2b8', 'icon' => 'fa-spinner', 'label' => 'Processing'],
             'shipped' => ['color' => '#007bff', 'icon' => 'fa-shipping-fast', 'label' => 'Shipped'],
             'completed' => ['color' => '#28a745', 'icon' => 'fa-check-double', 'label' => 'Completed'],
             'cancelled' => ['color' => '#dc3545', 'icon' => 'fa-times-circle', 'label' => 'Cancelled']
@@ -275,6 +276,40 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                 </div>
                             </label>
 
+                            <!-- Processing Option -->
+                            <label style="position: relative; cursor: pointer; margin-bottom: 0;">
+                                <input type="radio" name="status" value="processing" 
+                                       <?php echo ($order['order_status'] == 'processing') ? 'checked' : ''; ?>
+                                       style="position: absolute; opacity: 0; cursor: pointer; z-index: 10; width: 100%; height: 100%;">
+                                <div style="padding: 16px 18px; 
+                                           border: 2px solid #e0e0e0; 
+                                           border-radius: 12px; 
+                                           background: white; 
+                                           cursor: pointer; 
+                                           transition: all 0.3s ease;
+                                           display: flex;
+                                           align-items: center;
+                                           gap: 14px;"
+                                    class="status-option-processing">
+                                    <div style="width: 24px; height: 24px; 
+                                               border: 2px solid #17a2b8; 
+                                               border-radius: 50%; 
+                                               display: flex; 
+                                               align-items: center; 
+                                               justify-content: center; 
+                                               flex-shrink: 0; 
+                                               background: white; 
+                                               transition: all 0.3s;">
+                                        <i class="fas fa-check" style="color: #17a2b8; font-size: 0.7rem; opacity: 0; transition: opacity 0.3s;"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; color: #333; font-size: 0.95rem;">Processing</div>
+                                        <div style="font-size: 0.85rem; color: #999; margin-top: 2px;">Order is being prepared</div>
+                                    </div>
+                                    <i class="fas fa-spinner" style="color: #17a2b8; font-size: 1.3rem; opacity: 0.6;"></i>
+                                </div>
+                            </label>
+
                             <!-- Shipped Option -->
                             <label style="position: relative; cursor: pointer; margin-bottom: 0;">
                                 <input type="radio" name="status" value="shipped" 
@@ -306,6 +341,40 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                         <div style="font-size: 0.85rem; color: #999; margin-top: 2px;">Order is on the way</div>
                                     </div>
                                     <i class="fas fa-shipping-fast" style="color: #007bff; font-size: 1.3rem; opacity: 0.6;"></i>
+                                </div>
+                            </label>
+
+                            <!-- Delivered Option -->
+                            <label style="position: relative; cursor: pointer; margin-bottom: 0;">
+                                <input type="radio" name="status" value="delivered" 
+                                       <?php echo ($order['order_status'] == 'delivered') ? 'checked' : ''; ?>
+                                       style="position: absolute; opacity: 0; cursor: pointer; z-index: 10; width: 100%; height: 100%;">
+                                <div style="padding: 16px 18px; 
+                                           border: 2px solid #e0e0e0; 
+                                           border-radius: 12px; 
+                                           background: white; 
+                                           cursor: pointer; 
+                                           transition: all 0.3s ease;
+                                           display: flex;
+                                           align-items: center;
+                                           gap: 14px;"
+                                    class="status-option-delivered">
+                                    <div style="width: 24px; height: 24px; 
+                                               border: 2px solid #28a745; 
+                                               border-radius: 50%; 
+                                               display: flex; 
+                                               align-items: center; 
+                                               justify-content: center; 
+                                               flex-shrink: 0; 
+                                               background: white; 
+                                               transition: all 0.3s;">
+                                        <i class="fas fa-check" style="color: #28a745; font-size: 0.7rem; opacity: 0; transition: opacity 0.3s;"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; color: #333; font-size: 0.95rem;">Delivered</div>
+                                        <div style="font-size: 0.85rem; color: #999; margin-top: 2px;">Order has been delivered (will auto-complete)</div>
+                                    </div>
+                                    <i class="fas fa-check" style="color: #28a745; font-size: 1.3rem; opacity: 0.6;"></i>
                                 </div>
                             </label>
 
@@ -366,7 +435,9 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                             }
 
                             .status-option-pending:hover,
+                            .status-option-processing:hover,
                             .status-option-shipped:hover,
+                            .status-option-delivered:hover,
                             .status-option-cancelled:hover {
                                 border-color: var(--purple-medium) !important;
                                 box-shadow: 0 2px 8px rgba(139, 95, 191, 0.1) !important;

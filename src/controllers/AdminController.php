@@ -443,7 +443,14 @@ class AdminController {
             }
             $orderId = intval($_POST['order_id'] ?? 0);
             $status = $_POST['status'] ?? 'pending';
-            if ($orderId && $this->orderModel->updateStatus($orderId, $status)) {
+            
+            // If status is 'delivered', set to 'completed' and archive
+            if ($status === 'delivered') {
+                $status = 'completed';
+                $this->orderModel->updateStatus($orderId, $status);
+                $this->orderModel->archiveCompletedOrder($orderId);
+                Session::setFlash('success', 'Order marked as delivered and completed');
+            } elseif ($this->orderModel->updateStatus($orderId, $status)) {
                 Session::setFlash('success', 'Order status updated');
             } else {
                 Session::setFlash('message', 'Failed to update order');

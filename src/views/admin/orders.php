@@ -59,6 +59,15 @@ require_once __DIR__ . '/../../helpers/UIHelper.php';
                         <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? 'rgba(146, 64, 14, 0.2)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'pending') ? '#92400e' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['pending']; ?></span>
                     <?php endif; ?>
                 </a>
+                <a href="admin.php?page=orders&status=processing<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?><?php echo isset($_GET['sort']) ? '&sort=' . htmlspecialchars($_GET['sort']) . '&order=' . htmlspecialchars($_GET['order'] ?? 'DESC') : ''; ?>" 
+                   class="d-flex align-items-center" 
+                   style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'processing') ? 'background: #d1ecf1; color: #0c5460 !important; border: 2px solid #bee5eb; box-shadow: 0 4px 12px rgba(190, 229, 235, 0.2);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">
+                    <i class="fas fa-spinner me-2" style="color: inherit;"></i> 
+                    <span class="me-2" style="color: inherit;">Processing</span>
+                    <?php if ($statusCounts['processing'] > 0): ?>
+                        <span class="badge" style="background: <?php echo (isset($_GET['status']) && $_GET['status'] == 'processing') ? 'rgba(12, 84, 96, 0.2)' : 'white'; ?>; color: <?php echo (isset($_GET['status']) && $_GET['status'] == 'processing') ? '#0c5460' : '#8b5fbf'; ?>; font-size: 0.9rem; padding: 6px 12px; border-radius: 12px; font-weight: 700;"><?php echo $statusCounts['processing']; ?></span>
+                    <?php endif; ?>
+                </a>
                 <a href="admin.php?page=orders&status=shipped<?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?><?php echo isset($_GET['sort']) ? '&sort=' . htmlspecialchars($_GET['sort']) . '&order=' . htmlspecialchars($_GET['order'] ?? 'DESC') : ''; ?>" 
                    class="d-flex align-items-center" 
                    style="border-radius: 20px; padding: 10px 20px; text-decoration: none; <?php echo (isset($_GET['status']) && $_GET['status'] == 'shipped') ? 'background: #dbeafe; color: #1e40af !important; border: 2px solid #93c5fd; box-shadow: 0 4px 12px rgba(147, 197, 253, 0.2);' : 'background: #8b5fbf; color: white !important; border: 2px solid #8b5fbf;'; ?>">

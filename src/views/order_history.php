@@ -25,9 +25,10 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
 <!-- Status Filter Pills -->
 <div class="row mb-4">
     <div class="col-12">
+
         <?php
-        // Calculate status counts using UIHelper
-        $statusCounts = UIHelper::calculateStatusCounts($allOrders, true);
+        // Calculate status counts using UIHelper (don't group for filtering)
+        $statusCounts = UIHelper::calculateStatusCounts($allOrders, false);
         
         $currentFilter = $_GET['filter'] ?? 'all';
         ?>
@@ -49,6 +50,17 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
                     <span class="me-2">Pending</span>
                     <?php if ($statusCounts['pending'] > 0): ?>
                         <span class="badge bg-white" style="color: var(--purple-dark);"><?php echo $statusCounts['pending']; ?></span>
+                    <?php endif; ?>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="index.php?page=order_history&filter=processing" 
+                   class="nav-link d-flex align-items-center <?php echo ($currentFilter == 'processing') ? 'active' : ''; ?>" 
+                   style="border-radius: 20px; padding: 10px 20px;">
+                    <i class="fas fa-spinner me-2"></i> 
+                    <span class="me-2">Processing</span>
+                    <?php if ($statusCounts['processing'] > 0): ?>
+                        <span class="badge bg-white" style="color: var(--purple-dark);"><?php echo $statusCounts['processing']; ?></span>
                     <?php endif; ?>
                 </a>
             </li>
@@ -132,13 +144,6 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
                                style="border-radius: 20px;"
                                onclick="return confirm('Are you sure you want to cancel this order?');">
                                 <i class="fas fa-times-circle"></i> Cancel Order
-                            </a>
-                        <?php elseif (in_array($order['order_status'], ['delivered', 'shipped'])): ?>
-                            <a href="index.php?page=order&action=confirm_receipt&id=<?php echo $order['id']; ?>" 
-                               class="btn btn-success"
-                               style="border-radius: 20px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;"
-                               onclick="return confirm('Confirm that you have received this order?');">
-                                <i class="fas fa-check-circle"></i> Order Received
                             </a>
                         <?php endif; ?>
                     </div>

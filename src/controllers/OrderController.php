@@ -64,7 +64,7 @@ class OrderController {
         } else {
             $subtotal = $this->cartModel->getCartTotal($customerId);
         }
-        $shippingCost = 0.00; // No shipping - walk-in/pickup
+        $shippingCost = 50.00; // Shipping fee
         $taxAmount = 0.00; // No tax
         $totalAmount = $subtotal + $shippingCost + $taxAmount;
         
@@ -138,7 +138,7 @@ class OrderController {
         } else {
             $subtotal = $this->cartModel->getCartTotal($customerId);
         }
-        $shippingCost = 0.00; // No shipping - walk-in/pickup
+        $shippingCost = 50.00; // Shipping fee
         $taxAmount = 0.00; // No tax
         $totalAmount = $subtotal + $shippingCost + $taxAmount;
         
@@ -235,9 +235,9 @@ class OrderController {
         if (isset($_GET['filter']) && $_GET['filter'] !== 'all') {
             $filter = $_GET['filter'];
             $filteredOrders = array_filter($allOrders, function($order) use ($filter) {
-                // Group processing and delivered into shipped for customer view
+                // Handle processing separately, shipped includes shipped and delivered
                 if ($filter === 'shipped') {
-                    return in_array($order['order_status'], ['processing', 'shipped', 'delivered']);
+                    return in_array($order['order_status'], ['shipped', 'delivered']);
                 }
                 return $order['order_status'] === $filter;
             });

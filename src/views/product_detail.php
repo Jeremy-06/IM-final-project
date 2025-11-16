@@ -474,6 +474,9 @@ function render_stars($rating, $totalReviews = 0) {
                 
                 fetch('index.php?page=add_review', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
                     body: formData
                 })
                 .then(response => response.json())

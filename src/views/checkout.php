@@ -23,7 +23,7 @@ $profileComplete = empty($incompleteFields);
 ?>
 
 <div class="row mb-4">
-    <div class="col-md-12">
+    <div class="col-md-12 ps-3">
         <h2 class="mb-0" style="margin-top: 0;">
             <i class="fas fa-credit-card me-2"></i>Checkout
         </h2>
@@ -75,7 +75,7 @@ $profileComplete = empty($incompleteFields);
     </div>
     
     <div class="col-md-5">
-        <div class="card shadow-sm sticky-top" style="top: 20px;">
+        <div class="card shadow-sm">
             <div class="card-header" style="background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-medium) 100%);">
                 <h5 class="mb-0 text-white">
                     <i class="fas fa-receipt me-2"></i>Order Total
@@ -103,7 +103,7 @@ $profileComplete = empty($incompleteFields);
                     <h4 class="mb-0 text-primary">₱<?php echo number_format($totalAmount, 2); ?></h4>
                 </div>
                 
-                <div class="mb-4">
+                    <div class="mb-4">
                     <h6 class="mb-3">
                         <i class="fas fa-money-bill-wave me-2"></i>Payment Method
                     </h6>
@@ -116,8 +116,8 @@ $profileComplete = empty($incompleteFields);
                                         <i class="fas fa-money-bill-wave text-white"></i>
                                     </div>
                                     <div>
-                                        <strong style="color: var(--purple-dark);">Cash Payment</strong><br>
-                                        <small class="text-muted">Pay with cash at pickup/walk-in</small>
+                                        <strong style="color: var(--purple-dark);">Cash on Delivery</strong><br>
+                                        <small class="text-muted">Pay with cash upon delivery or pickup</small>
                                     </div>
                                 </div>
                                 <div style="width: 24px; height: 24px; background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-medium) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">

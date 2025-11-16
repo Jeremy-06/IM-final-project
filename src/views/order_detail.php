@@ -331,7 +331,7 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
     
     <div class="col-md-4">
         <!-- Order Summary Card -->
-        <div class="card shadow-sm sticky-top" style="border: none; border-radius: 20px; overflow: hidden; border-top: 5px solid var(--purple-dark); top: 20px;">
+        <div class="card shadow-sm" style="border: none; border-radius: 20px; overflow: hidden; border-top: 5px solid var(--purple-dark);">
             <div class="card-header no-print" style="background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-medium) 100%); color: white; padding: 1.5rem; border: none;">
                 <h5 class="mb-0" style="color: white; font-weight: 700;"><i class="fas fa-calculator me-2"></i>Order Summary</h5>
             </div>
@@ -342,20 +342,6 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
                         <?php echo UIHelper::formatCurrency($order['total_amount']); ?>
                     </h2>
                 </div>
-                
-                <?php if ($order['order_status'] === 'delivered'): ?>
-                <div class="mt-4 pt-4" style="border-top: 2px solid #e0e0e0;">
-                    <a href="index.php?page=order&action=confirm_receipt&id=<?php echo $order['id']; ?>" 
-                       class="btn btn-success w-100"
-                       style="border-radius: 15px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; padding: 14px; font-weight: 600; font-size: 1.05rem;"
-                       onclick="return confirm('Confirm that you have received this order?');">
-                        <i class="fas fa-check-circle me-2"></i>Mark as Received
-                    </a>
-                    <p class="text-muted small text-center mt-2 mb-0">
-                        <i class="fas fa-info-circle me-1"></i>Confirm order delivery
-                    </p>
-                </div>
-                <?php endif; ?>
                 
                 <!-- Buy Again Feature -->
                 <div class="mt-4 pt-4" style="border-top: 2px solid #e0e0e0;">
