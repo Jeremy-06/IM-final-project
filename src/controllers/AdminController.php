@@ -11,7 +11,6 @@ require_once __DIR__ . '/../models/Order.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Expense.php';
 require_once __DIR__ . '/../models/Supplier.php';
-require_once __DIR__ . '/../models/Review.php';
 
 class AdminController {
     private $productModel;
@@ -20,7 +19,6 @@ class AdminController {
     private $userModel;
     private $expenseModel;
     private $supplierModel;
-    private $reviewModel;
 
     public function __construct() {
         $this->productModel = new Product();
@@ -29,7 +27,6 @@ class AdminController {
         $this->userModel = new User();
         $this->expenseModel = new Expense();
         $this->supplierModel = new Supplier();
-        $this->reviewModel = new Review();
     } // Added closing brace
 
     public function dashboard() {
@@ -1471,55 +1468,4 @@ class AdminController {
         }
         exit();
     } // Closing brace for deleteProductImages()
-
-    public function manageReviews() {
-        $search = $_GET['search'] ?? '';
-        $productId = $_GET['product_id'] ?? null;
-        
-        $itemsPerPage = 10;
-        $currentPage = isset($_GET['pg']) ? max(1, intval($_GET['pg'])) : 1;
-        $offset = ($currentPage - 1) * $itemsPerPage;
-
-        $reviews = $this->reviewModel->getReviewsForAdmin($itemsPerPage, $offset, $search, $productId);
-        $totalReviews = $this->reviewModel->countReviewsForAdmin($search, $productId);
-        $totalPages = ceil($totalReviews / $itemsPerPage);
-
-        // Fetch all products for the filter dropdown
-        $productModel = new Product(); // Instantiate Product model here
-        $products = $productModel->findAll();
-
-        include __DIR__ . '/../views/admin/reviews.php';
-    }
-
-    public function replyToReview() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            Session::setFlash('error', 'Invalid request method.');
-            header('Location: admin.php?page=reviews');
-            exit();
-        }
-
-        if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
-            Session::setFlash('error', 'Invalid CSRF token.');
-            header('Location: admin.php?page=reviews');
-            exit();
-        }
-
-        $reviewId = intval($_POST['review_id'] ?? 0);
-        $adminReply = trim($_POST['admin_reply'] ?? '');
-
-        if (!$reviewId || empty($adminReply)) {
-            Session::setFlash('error', 'Review ID and reply cannot be empty.');
-            header('Location: admin.php?page=reviews');
-            exit();
-        }
-
-        if ($this->reviewModel->addAdminReply($reviewId, $adminReply)) {
-            Session::setFlash('success', 'Reply added successfully.');
-        } else {
-            Session::setFlash('error', 'Failed to add reply.');
-        }
-
-        header('Location: admin.php?page=reviews');
-        exit();
-    }
 }

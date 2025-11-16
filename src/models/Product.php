@@ -9,16 +9,15 @@ class Product extends BaseModel {
     public function create($categoryId, $productName, $description, $costPrice, $sellingPrice, $supplierId = null, $imgPath = '') {
         $sql = "INSERT INTO products (category_id, product_name, description, cost_price, selling_price, supplier_id, img_path) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'issddis', $categoryId, $productName, $description, $costPrice, $sellingPrice, $supplierId, $imgPath);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('isssdis', $categoryId, $productName, $description, $costPrice, $sellingPrice, $supplierId, $imgPath);
         
-        if (mysqli_stmt_execute($stmt)) {
-            $productId = mysqli_insert_id($this->conn);
-            // Create inventory record
+        if ($stmt->execute()) {
+            $productId = $this->conn->insert_id;
             $invSql = "INSERT INTO inventory (product_id, quantity_on_hand) VALUES (?, 0)";
-            $invStmt = mysqli_prepare($this->conn, $invSql);
-            mysqli_stmt_bind_param($invStmt, 'i', $productId);
-            mysqli_stmt_execute($invStmt);
+            $invStmt = $this->conn->prepare($invSql);
+            $invStmt->bind_param('i', $productId);
+            $invStmt->execute();
             return $productId;
         }
         return false;
@@ -26,55 +25,52 @@ class Product extends BaseModel {
     
     public function update($id, $categoryId, $productName, $description, $costPrice, $sellingPrice, $supplierId = null, $imgPath = null, $isActive = null) {
         $updates = [];
+        $params = [];
         $types = '';
-        $values = [];
         
-        // Always update these
         $updates[] = "category_id = ?";
+        $params[] = $categoryId;
         $types .= 'i';
-        $values[] = $categoryId;
         
         $updates[] = "product_name = ?";
+        $params[] = $productName;
         $types .= 's';
-        $values[] = $productName;
         
         $updates[] = "description = ?";
+        $params[] = $description;
         $types .= 's';
-        $values[] = $description;
         
         $updates[] = "cost_price = ?";
+        $params[] = $costPrice;
         $types .= 'd';
-        $values[] = $costPrice;
         
         $updates[] = "selling_price = ?";
+        $params[] = $sellingPrice;
         $types .= 'd';
-        $values[] = $sellingPrice;
         
         $updates[] = "supplier_id = ?";
+        $params[] = $supplierId;
         $types .= 'i';
-        $values[] = $supplierId;
         
-        // Conditionally update these
         if ($imgPath !== null) {
             $updates[] = "img_path = ?";
+            $params[] = $imgPath;
             $types .= 's';
-            $values[] = $imgPath;
         }
         
         if ($isActive !== null) {
             $updates[] = "is_active = ?";
+            $params[] = $isActive;
             $types .= 'i';
-            $values[] = $isActive;
         }
         
-        // Add id at the end
+        $params[] = $id;
         $types .= 'i';
-        $values[] = $id;
         
         $sql = "UPDATE products SET " . implode(", ", $updates) . " WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, $types, ...$values);
-        return mysqli_stmt_execute($stmt);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        return $stmt->execute();
     }
     
     public function getWithCategory() {
@@ -85,56 +81,49 @@ class Product extends BaseModel {
                 LEFT JOIN inventory i ON p.id = i.product_id 
                 WHERE p.is_active = 1 
                 ORDER BY p.created_at DESC";
-        $result = mysqli_query($this->conn, $sql);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function searchAndSortProducts($search = '', $sortBy = 'created_at', $sortOrder = 'DESC') {
-        // Validate sort column
         $allowedColumns = ['product_name', 'category_name', 'supplier_name', 'cost_price', 'selling_price', 'quantity_on_hand', 'created_at', 'is_active'];
         if (!in_array($sortBy, $allowedColumns)) {
             $sortBy = 'created_at';
         }
         
-        // Validate sort order
         $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
         
-        // Map sorting columns to actual table columns
-        $sortColumn = $sortBy;
-        if ($sortBy === 'product_name' || $sortBy === 'cost_price' || $sortBy === 'selling_price' || $sortBy === 'created_at' || $sortBy === 'is_active') {
-            $sortColumn = 'p.' . $sortBy;
-        } else if ($sortBy === 'category_name') {
+        $sortColumn = 'p.' . $sortBy;
+        if ($sortBy === 'category_name') {
             $sortColumn = 'c.category_name';
-        } else if ($sortBy === 'supplier_name') {
+        } elseif ($sortBy === 'supplier_name') {
             $sortColumn = 's.supplier_name';
-        } else if ($sortBy === 'quantity_on_hand') {
+        } elseif ($sortBy === 'quantity_on_hand') {
             $sortColumn = 'i.quantity_on_hand';
         }
         
+        $sql = "SELECT p.*, c.category_name, s.supplier_name, i.quantity_on_hand 
+                FROM products p 
+                INNER JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN inventory i ON p.id = i.product_id";
+        
+        if (!empty($search)) {
+            $sql .= " WHERE (p.product_name LIKE ? OR p.description LIKE ? OR c.category_name LIKE ? OR s.supplier_name LIKE ?)";
+        }
+        
+        $sql .= " ORDER BY $sortColumn $sortOrder";
+        
+        $stmt = $this->conn->prepare($sql);
+
         if (!empty($search)) {
             $searchTerm = '%' . $search . '%';
-            $sql = "SELECT p.*, c.category_name, s.supplier_name, i.quantity_on_hand 
-                    FROM products p 
-                    INNER JOIN categories c ON p.category_id = c.id 
-                    LEFT JOIN suppliers s ON p.supplier_id = s.id
-                    LEFT JOIN inventory i ON p.id = i.product_id 
-                    WHERE (p.product_name LIKE ? OR p.description LIKE ? OR c.category_name LIKE ? OR s.supplier_name LIKE ?)
-                    ORDER BY $sortColumn $sortOrder";
-            $stmt = mysqli_prepare($this->conn, $sql);
-            mysqli_stmt_bind_param($stmt, 'ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
-            mysqli_stmt_execute($stmt);
-            $result = mysqli_stmt_get_result($stmt);
-            return mysqli_fetch_all($result, MYSQLI_ASSOC);
-        } else {
-            $sql = "SELECT p.*, c.category_name, s.supplier_name, i.quantity_on_hand 
-                    FROM products p 
-                    INNER JOIN categories c ON p.category_id = c.id 
-                    LEFT JOIN suppliers s ON p.supplier_id = s.id
-                    LEFT JOIN inventory i ON p.id = i.product_id 
-                    ORDER BY $sortColumn $sortOrder";
-            $result = mysqli_query($this->conn, $sql);
-            return mysqli_fetch_all($result, MYSQLI_ASSOC);
+            $stmt->bind_param('ssss', $searchTerm, $searchTerm, $searchTerm, $searchTerm);
         }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function getActiveProducts() {
@@ -145,8 +134,8 @@ class Product extends BaseModel {
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE p.is_active = 1 AND i.quantity_on_hand > 0 
                 ORDER BY p.created_at DESC";
-        $result = mysqli_query($this->conn, $sql);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function getActiveProductsPaginated($limit = 9, $offset = 0) {
@@ -158,21 +147,20 @@ class Product extends BaseModel {
                 WHERE p.is_active = 1 AND i.quantity_on_hand > 0 
                 ORDER BY p.created_at DESC
                 LIMIT ? OFFSET ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ii', $limit, $offset);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('ii', $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function countActiveProducts() {
-        $sql = "SELECT COUNT(*) as total 
+        $sql = "SELECT COUNT(*) 
                 FROM products p 
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE p.is_active = 1 AND i.quantity_on_hand > 0";
-        $result = mysqli_query($this->conn, $sql);
-        $row = mysqli_fetch_assoc($result);
-        return $row['total'];
+        $result = $this->conn->query($sql);
+        return $result->fetch_row()[0];
     }
     
     public function getByCategory($categoryId) {
@@ -182,11 +170,11 @@ class Product extends BaseModel {
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE p.category_id = ? AND p.is_active = 1 AND i.quantity_on_hand > 0 
                 ORDER BY p.product_name ASC";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $categoryId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $categoryId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function getByCategoryPaginated($categoryId, $limit = 9, $offset = 0) {
@@ -197,24 +185,23 @@ class Product extends BaseModel {
                 WHERE p.category_id = ? AND p.is_active = 1 AND i.quantity_on_hand > 0 
                 ORDER BY p.product_name ASC
                 LIMIT ? OFFSET ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'iii', $categoryId, $limit, $offset);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('iii', $categoryId, $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function countByCategory($categoryId) {
-        $sql = "SELECT COUNT(*) as total 
+        $sql = "SELECT COUNT(*) 
                 FROM products p 
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE p.category_id = ? AND p.is_active = 1 AND i.quantity_on_hand > 0";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $categoryId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $row = mysqli_fetch_assoc($result);
-        return $row['total'];
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $categoryId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_row()[0];
     }
     
     public function search($keyword) {
@@ -226,11 +213,11 @@ class Product extends BaseModel {
                 LEFT JOIN inventory i ON p.id = i.product_id 
                 WHERE (p.product_name LIKE ? OR p.description LIKE ?) AND p.is_active = 1 
                 ORDER BY p.product_name ASC";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ss', $searchTerm, $searchTerm);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('ss', $searchTerm, $searchTerm);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function searchPaginated($keyword, $limit = 9, $offset = 0) {
@@ -243,42 +230,40 @@ class Product extends BaseModel {
                 WHERE (p.product_name LIKE ? OR p.description LIKE ?) AND p.is_active = 1 
                 ORDER BY p.product_name ASC
                 LIMIT ? OFFSET ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ssii', $searchTerm, $searchTerm, $limit, $offset);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('ssii', $searchTerm, $searchTerm, $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
     public function countSearch($keyword) {
         $searchTerm = "%{$keyword}%";
-        $sql = "SELECT COUNT(*) as total 
+        $sql = "SELECT COUNT(*) 
                 FROM products p 
                 LEFT JOIN inventory i ON p.id = i.product_id 
                 WHERE (p.product_name LIKE ? OR p.description LIKE ?) AND p.is_active = 1";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ss', $searchTerm, $searchTerm);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $row = mysqli_fetch_assoc($result);
-        return $row['total'];
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('ss', $searchTerm, $searchTerm);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_row()[0];
     }
     
     public function updateInventory($productId, $quantity) {
         $sql = "UPDATE inventory SET quantity_on_hand = ? WHERE product_id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ii', $quantity, $productId);
-        return mysqli_stmt_execute($stmt);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('ii', $quantity, $productId);
+        return $stmt->execute();
     }
     
     public function getInventory($productId) {
         $sql = "SELECT quantity_on_hand FROM inventory WHERE product_id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $productId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $row = mysqli_fetch_assoc($result);
-        return $row ? $row['quantity_on_hand'] : 0;
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_row()[0] ?? 0;
     }
     
     public function findByIdWithDetails($productId) {
@@ -288,176 +273,132 @@ class Product extends BaseModel {
                 LEFT JOIN suppliers s ON p.supplier_id = s.id 
                 WHERE p.id = ? 
                 LIMIT 1";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $productId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_assoc($result);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
     }
     
     public function hasOrderItems($productId) {
-        $sql = "SELECT COUNT(*) as count FROM order_items WHERE product_id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $productId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $row = mysqli_fetch_assoc($result);
-        return $row['count'] > 0;
+        $sql = "SELECT COUNT(*) FROM order_items WHERE product_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_row()[0] > 0;
     }
     
     public function hasActiveOrderItems($productId) {
-        // Check if product has order items in non-completed orders
-        $sql = "SELECT COUNT(*) as count 
+        $sql = "SELECT COUNT(*) 
                 FROM order_items oi 
                 INNER JOIN orders o ON oi.order_id = o.id 
                 WHERE oi.product_id = ? 
                 AND o.order_status NOT IN ('completed', 'cancelled')";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $productId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $row = mysqli_fetch_assoc($result);
-        return $row['count'] > 0;
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_row()[0] > 0;
     }
     
     public function deleteWithOrderItems($productId) {
-        // Start transaction
-        mysqli_begin_transaction($this->conn);
-        
+        $this->db->beginTransaction();
         try {
-            // Get product image path before deletion
             $product = $this->findById($productId);
             $imagePath = $product['img_path'] ?? null;
-            
-            // Get all product images from product_images table
             $productImages = $this->getProductImages($productId);
             
-            // NOTE: We don't delete order_items anymore to preserve order history
-            // The foreign key will set product_id to NULL automatically
-            // But let's make sure snapshot data is populated for any order_items that don't have it
             $sql = "UPDATE order_items SET 
                     product_name = COALESCE(product_name, ?),
                     product_image = COALESCE(product_image, ?)
                     WHERE product_id = ?";
-            $stmt = mysqli_prepare($this->conn, $sql);
-            mysqli_stmt_bind_param($stmt, 'ssi', $product['product_name'], $product['img_path'], $productId);
-            mysqli_stmt_execute($stmt);
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param('ssi', $product['product_name'], $product['img_path'], $productId);
+            $stmt->execute();
             
-            // Delete all product images from product_images table and their physical files
             foreach ($productImages as $image) {
-                // Delete physical file
                 $fullImagePath = __DIR__ . '/../../public/uploads/' . $image['image_path'];
                 if (file_exists($fullImagePath)) {
                     @unlink($fullImagePath);
                 }
             }
             
-            // Delete all records from product_images table
             $sql = "DELETE FROM product_images WHERE product_id = ?";
-            $stmt = mysqli_prepare($this->conn, $sql);
-            mysqli_stmt_bind_param($stmt, 'i', $productId);
-            mysqli_stmt_execute($stmt);
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param('i', $productId);
+            $stmt->execute();
             
-            // Then delete from inventory
             $sql = "DELETE FROM inventory WHERE product_id = ?";
-            $stmt = mysqli_prepare($this->conn, $sql);
-            mysqli_stmt_bind_param($stmt, 'i', $productId);
-            mysqli_stmt_execute($stmt);
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param('i', $productId);
+            $stmt->execute();
             
-            // Finally, delete the product
             $sql = "DELETE FROM products WHERE id = ?";
-            $stmt = mysqli_prepare($this->conn, $sql);
-            mysqli_stmt_bind_param($stmt, 'i', $productId);
-            mysqli_stmt_execute($stmt);
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param('i', $productId);
+            $stmt->execute();
             
-            // Delete the physical image file if it exists (legacy img_path)
             if (!empty($imagePath)) {
                 $fullImagePath = __DIR__ . '/../../public/uploads/' . $imagePath;
-                // Only attempt to delete if file exists, no error if it doesn't
                 if (file_exists($fullImagePath)) {
                     @unlink($fullImagePath);
                 }
             }
             
-            // Commit transaction
-            mysqli_commit($this->conn);
+            $this->db->commit();
             return true;
         } catch (Exception $e) {
-            // Rollback on error
-            mysqli_rollback($this->conn);
+            $this->db->rollback();
             return false;
         }
     }
     
-    // ========== Product Images Methods ==========
-    
-    /**
-     * Get all images for a product
-     * @param int $productId
-     * @return array
-     */
     public function getProductImages($productId) {
         $sql = "SELECT * FROM product_images 
                 WHERE product_id = ? 
                 ORDER BY is_primary DESC, display_order ASC";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $productId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
     
-    /**
-     * Add a new image for a product
-     * @param int $productId
-     * @param string $imagePath
-     * @param int $displayOrder
-     * @param bool $isPrimary
-     * @return int|bool Image ID on success, false on failure
-     */
     public function addProductImage($productId, $imagePath, $displayOrder = 0, $isPrimary = false) {
-        // If setting as primary, unset other primary images
         if ($isPrimary) {
             $this->unsetPrimaryImage($productId);
         }
         
         $sql = "INSERT INTO product_images (product_id, image_path, display_order, is_primary) 
                 VALUES (?, ?, ?, ?)";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        $isPrimaryInt = $isPrimary ? 1 : 0;
-        mysqli_stmt_bind_param($stmt, 'isii', $productId, $imagePath, $displayOrder, $isPrimaryInt);
+        $stmt = $this->conn->prepare($sql);
+        $isPrimaryInt = (int)$isPrimary;
+        $stmt->bind_param('isii', $productId, $imagePath, $displayOrder, $isPrimaryInt);
         
-        if (mysqli_stmt_execute($stmt)) {
-            return mysqli_insert_id($this->conn);
+        if ($stmt->execute()) {
+            return $this->conn->insert_id;
         }
         return false;
     }
     
-    /**
-     * Delete a product image
-     * @param int $imageId
-     * @return bool
-     */
     public function deleteProductImage($imageId) {
-        // Get image path before deletion
         $sql = "SELECT image_path FROM product_images WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $imageId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $image = mysqli_fetch_assoc($result);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $imageId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $image = $result->fetch_assoc();
         
         if (!$image) {
             return false;
         }
         
-        // Delete from database
         $sql = "DELETE FROM product_images WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $imageId);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $imageId);
         
-        if (mysqli_stmt_execute($stmt)) {
-            // Delete physical file
+        if ($stmt->execute()) {
             $fullImagePath = __DIR__ . '/../../public/uploads/' . $image['image_path'];
             if (file_exists($fullImagePath)) {
                 @unlink($fullImagePath);
@@ -467,56 +408,61 @@ class Product extends BaseModel {
         return false;
     }
     
-    /**
-     * Set an image as primary
-     * @param int $imageId
-     * @return bool
-     */
     public function setPrimaryImage($imageId) {
-        // Get product_id for this image
         $sql = "SELECT product_id FROM product_images WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $imageId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $image = mysqli_fetch_assoc($result);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $imageId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $image = $result->fetch_assoc();
         
         if (!$image) {
             return false;
         }
         
-        // Unset all primary images for this product
         $this->unsetPrimaryImage($image['product_id']);
         
-        // Set this image as primary
         $sql = "UPDATE product_images SET is_primary = 1 WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $imageId);
-        return mysqli_stmt_execute($stmt);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $imageId);
+        return $stmt->execute();
     }
     
-    /**
-     * Unset primary image for a product
-     * @param int $productId
-     * @return bool
-     */
     private function unsetPrimaryImage($productId) {
         $sql = "UPDATE product_images SET is_primary = 0 WHERE product_id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'i', $productId);
-        return mysqli_stmt_execute($stmt);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $productId);
+        return $stmt->execute();
     }
     
-    /**
-     * Update display order for an image
-     * @param int $imageId
-     * @param int $displayOrder
-     * @return bool
-     */
     public function updateImageOrder($imageId, $displayOrder) {
         $sql = "UPDATE product_images SET display_order = ? WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ii', $displayOrder, $imageId);
-        return mysqli_stmt_execute($stmt);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('ii', $displayOrder, $imageId);
+        return $stmt->execute();
+    }
+
+    public function updateRating($productId, $averageRating, $reviewCount) {
+        $sql = "UPDATE products SET average_rating = ?, review_count = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('dii', $averageRating, $reviewCount, $productId);
+        return $stmt->execute();
+    }
+
+    public function hasUserReviewedProduct($userId, $productId) {
+        $sql = "SELECT COUNT(*) FROM reviews WHERE user_id = ? AND product_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('ii', $userId, $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_row()[0] > 0;
+    }
+
+    public function setReviewFlag($orderItemId, $hasReviewed) {
+        $sql = "UPDATE order_items SET has_reviewed = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $hasReviewedInt = (int)$hasReviewed;
+        $stmt->bind_param('ii', $hasReviewedInt, $orderItemId);
+        return $stmt->execute();
     }
 }

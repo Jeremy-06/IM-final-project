@@ -241,6 +241,7 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
             </div>
             <div class="card-body p-3">
                 <?php foreach ($orderItems as $index => $item): ?>
+                <?php $itemHasReviewed = $item['user_has_reviewed_product']; ?>
                 <div class="card mb-3 shadow-sm order-item-card" style="border: 2px solid var(--purple-light); border-radius: 15px; overflow: hidden; transition: all 0.3s;">
                     <div class="card-body p-3" style="background: #fafbfc;">
                         <div class="row align-items-center g-3">
@@ -312,6 +313,13 @@ require_once __DIR__ . '/../helpers/UIHelper.php';
                             <div class="col-md-2 text-end">
                                 <p class="text-muted small mb-2" style="font-size: 0.9rem;">Subtotal</p>
                                 <h5 class="mb-0 fw-bold" style="color: var(--purple-dark); font-size: 1.1rem;"><?php echo UIHelper::formatCurrency($item['item_total']); ?></h5>
+                                <?php if ($order['order_status'] === 'completed' && !$itemHasReviewed && empty($item['is_deleted'])): ?>
+                                    <a href="index.php?page=product&id=<?php echo $item['product_id']; ?>&review=true&order_item_id=<?php echo $item['id']; ?>" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-star"></i> Leave a Review
+                                    </a>
+                                <?php elseif ($itemHasReviewed): ?>
+                                    <div class="text-muted small mt-2"><i class="fas fa-check-circle text-success"></i> Reviewed</div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

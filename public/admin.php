@@ -20,9 +20,12 @@ if (!Session::isLoggedIn() || !Session::isAdmin()) {
 require_once __DIR__ . '/../src/controllers/AdminController.php';
 require_once __DIR__ . '/../src/models/Product.php';
 require_once __DIR__ . '/../src/models/Category.php';
+require_once __DIR__ . '/../src/models/Order.php';
+require_once __DIR__ . '/../src/models/Expense.php';
 
 $controller = new AdminController();
 $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
+$action = $_GET['action'] ?? $_POST['action'] ?? null;
 
 switch ($page) {
     case 'products':

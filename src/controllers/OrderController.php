@@ -249,6 +249,15 @@ class OrderController {
         
         $orderItems = $this->orderModel->getOrderItems($orderId);
         
+        // Add review status for each product
+        require_once __DIR__ . '/../models/Review.php';
+        $reviewModel = new Review();
+        $userId = Session::getUserId();
+        foreach ($orderItems as &$item) {
+            $item['user_has_reviewed_product'] = $this->productModel->hasUserReviewedProduct($userId, $item['product_id']);
+        }
+        unset($item);
+        
         // If no items found (all products deleted), try to get from order_history backup
         if (empty($orderItems)) {
             $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);

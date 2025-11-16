@@ -42,6 +42,10 @@ class Session {
         }
         return null;
     }
+
+    public static function hasFlash($key) {
+        return isset($_SESSION['flash'][$key]);
+    }
     
     public static function isLoggedIn() {
         return isset($_SESSION['user_id']);

@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-session_start();
+
 
 require_once __DIR__ . '/../src/config/Config.php';
 require_once __DIR__ . '/../src/helpers/Session.php';
@@ -30,10 +30,8 @@ switch ($page) {
     case 'login':
         $controller = new AuthController();
         if ($action === 'process') {
-            echo "<!-- Processing login -->";
             $controller->login();
         } else {
-            echo "<!-- Showing login form -->";
             $controller->showLogin();
         }
         break;
@@ -57,9 +55,24 @@ switch ($page) {
         $controller->index();
         break;
         
-    case 'product_detail':
+    case 'product':
         $controller = new ProductController();
         $controller->show();
+        break;
+        
+    case 'add_review':
+        $controller = new ProductController();
+        $controller->addReview();
+        break;
+        
+    case 'edit_review': // New case for editing reviews
+        $controller = new ProductController();
+        $controller->editReview();
+        break;
+        
+    case 'admin_reply_review':
+        $controller = new ProductController();
+        $controller->adminReplyReview();
         break;
         
     case 'cart':

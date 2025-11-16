@@ -93,6 +93,20 @@ require_once __DIR__ . '/../helpers/Session.php';
                 <?php endif; ?>
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title"><?php echo htmlspecialchars($product['product_name']); ?></h5>
+                    <!-- Average rating -->
+                    <?php if (isset($product['average_rating'])): ?>
+                        <div class="mb-2 d-flex align-items-center">
+                            <div class="stars-outer" style="font-size:0.95rem; color: #d3d3d3; position: relative; display: inline-block;">
+                                <div class="stars-inner" style="color: #ffc107; position: absolute; top: 0; left: 0; white-space: nowrap; overflow: hidden; width: <?php echo ($product['average_rating'] / 5 * 100); ?>%;">
+                                    <?php for ($i = 0; $i < 5; $i++): ?><i class="fas fa-star"></i><?php endfor; ?>
+                                </div>
+                                <?php for ($i = 0; $i < 5; $i++): ?><i class="far fa-star"></i><?php endfor; ?>
+                            </div>
+                            <?php if (!empty($product['review_count'])): ?>
+                                <small class="text-muted ms-2"><?php echo number_format($product['average_rating'], 1); ?> (<?php echo $product['review_count']; ?>)</small>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                     <p class="card-text flex-grow-1"><?php echo htmlspecialchars(substr($product['description'], 0, 100)); ?>...</p>
                     <p class="card-text"><strong>₱<?php echo number_format($product['selling_price'], 2); ?></strong></p>
                     <p class="card-text">
@@ -102,7 +116,7 @@ require_once __DIR__ . '/../helpers/Session.php';
                             <small class="text-danger">Out of Stock</small>
                         <?php endif; ?>
                     </p>
-                    <a href="index.php?page=product_detail&id=<?php echo $product['id']; ?>" class="btn btn-primary">View Details</a>
+                    <a href="index.php?page=product&id=<?php echo $product['id']; ?>" class="btn btn-primary">View Details</a>
                 </div>
             </div>
         </div>

@@ -1,13 +1,19 @@
 // Main JavaScript file for Online Shop
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Auto-hide alerts after 5 seconds (except for cart empty message and modal alerts)
+  // Auto-hide alerts after 5 seconds (except for cart empty message, modal alerts,
+  // or alerts explicitly marked to never auto-hide via class/data attribute)
   const alerts = document.querySelectorAll(".alert");
   alerts.forEach((alert) => {
-    // Don't auto-hide the empty cart message or alerts inside modals
+    // Don't auto-hide the empty cart message, alerts inside modals,
+    // or alerts with explicit no-autohide markers
+    const hasNoAutoHideClass = alert.classList.contains("no-autohide");
+    const dataAutoHide = alert.getAttribute("data-autohide");
     if (
       !alert.textContent.includes("Your cart is empty") &&
-      !alert.closest(".modal")
+      !alert.closest(".modal") &&
+      !hasNoAutoHideClass &&
+      dataAutoHide !== "false"
     ) {
       setTimeout(() => {
         const bsAlert = new bootstrap.Alert(alert);

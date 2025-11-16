@@ -1820,3 +1820,35 @@ html {
     padding: 6px;
   }
 }
+
+/* ============================================
+    Star Rating Styles
+   ============================================ */
+
+.rating-stars {
+    display: inline-block;
+    direction: rtl; /* Right-to-left direction for star selection */
+}
+
+.rating-stars input[type="radio"] {
+    display: none; /* Hide the actual radio buttons */
+}
+
+.rating-stars label {
+    color: #ddd; /* Default star color (unselected) */
+    font-size: 1.5rem;
+    padding: 0 0.1rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+/* When hovering over a star, color it and all previous stars */
+.rating-stars label:hover,
+.rating-stars label:hover ~ label {
+    color: #ffc107; /* Hover color (gold) */
+}
+
+/* When a radio button is checked, color its label and all previous labels */
+.rating-stars input[type="radio"]:checked ~ label {
+    color: #ffc107; /* Selected color (gold) */
+}
