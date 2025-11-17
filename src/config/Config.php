@@ -43,4 +43,5 @@ class Config {
     const MAILTRAP_PASSWORD = 'c4940aa32db690';
     const MAILTRAP_ENCRYPTION = 'tls';
     const TEST_EMAIL = 'test@lotusplushies.mailtrap.io'; // Mailtrap test inbox
+    const ENABLE_MAILTRAP = true; // Set to false to disable Mailtrap test copies
 }

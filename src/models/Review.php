@@ -92,6 +92,21 @@ class Review extends BaseModel {
         $newReviewId = $this->conn->insert_id;
         $stmt->close();
 
+        // Mark the order item as reviewed
+        $updateSql = "UPDATE order_items SET has_reviewed = TRUE WHERE id = ?";
+        $updateStmt = $this->conn->prepare($updateSql);
+        if ($updateStmt === false) {
+            ErrorHandler::log("Review create update has_reviewed prepare failed: " . $this->conn->error, 'ERROR');
+            // Don't return false here, as the review was created successfully
+        } else {
+            $updateStmt->bind_param('i', $orderItemId);
+            $updateSuccess = $updateStmt->execute();
+            if (!$updateSuccess) {
+                ErrorHandler::log("Review create update has_reviewed execute failed: " . $updateStmt->error, 'ERROR');
+            }
+            $updateStmt->close();
+        }
+
         return $newReviewId;
     }
 

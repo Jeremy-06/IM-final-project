@@ -1001,4 +1001,32 @@ class Order extends BaseModel {
         mysqli_stmt_close($stmt);
         return ($row['count'] ?? 0) > 0;
     }
+
+    public function getOrderItemById($orderItemId) {
+        $sql = "SELECT oi.product_id, o.customer_id, o.order_status, oi.has_reviewed 
+                FROM order_items oi 
+                JOIN orders o ON oi.order_id = o.id 
+                WHERE oi.id = ? LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        
+        if ($stmt === false) {
+            ErrorHandler::log("getOrderItemById prepare failed: " . $this->db->getError(), 'ERROR');
+            return null;
+        }
+        mysqli_stmt_bind_param($stmt, 'i', $orderItemId);
+        if (!mysqli_stmt_execute($stmt)) {
+            ErrorHandler::log("getOrderItemById execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return null;
+        }
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result === false) {
+            ErrorHandler::log("getOrderItemById get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return null;
+        }
+        $orderItem = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
+        return $orderItem;
+    }
 }
