@@ -11,7 +11,7 @@ class User extends BaseModel {
             $email = strtolower($email);
             $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
             
-            $sql = "INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)";
+            $sql = "INSERT INTO users (email, password_hash, role, is_active) VALUES (?, ?, ?, 1)";
             $stmt = mysqli_prepare($this->conn, $sql);
             
             if ($stmt === false) {
@@ -59,7 +59,7 @@ class User extends BaseModel {
         try {
             $user = $this->findByEmail($email);
             
-            if ($user && password_verify($password, $user['password_hash'])) {
+            if ($user && password_verify($password, $user['password_hash']) && $user['is_active']) {
                 return $user;
             }
             return false;
@@ -79,13 +79,13 @@ class User extends BaseModel {
     }
     
     public function getAllCustomers() {
-        $sql = "SELECT id, email, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC";
+        $sql = "SELECT id, email, role, is_active, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function getAllUsers() {
-        $sql = "SELECT id, email, role, created_at FROM users ORDER BY created_at DESC";
+        $sql = "SELECT id, email, role, is_active, created_at FROM users ORDER BY created_at DESC";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
@@ -101,7 +101,7 @@ class User extends BaseModel {
             // Validate sort order
             $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
             
-            $sql = "SELECT id, email, role, first_name, last_name, phone, city, created_at FROM users WHERE 1=1";
+            $sql = "SELECT id, email, role, is_active, first_name, last_name, phone, city, created_at FROM users WHERE 1=1";
             $params = [];
             $types = '';
             
@@ -188,6 +188,14 @@ class User extends BaseModel {
         $sql = "UPDATE users SET password_hash = ? WHERE id = ?";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, 'si', $passwordHash, $userId);
+        return mysqli_stmt_execute($stmt);
+    }
+    
+    public function updateStatus($userId, $isActive) {
+        $isActive = $isActive ? 1 : 0;
+        $sql = "UPDATE users SET is_active = ? WHERE id = ?";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, 'ii', $isActive, $userId);
         return mysqli_stmt_execute($stmt);
     }
     

@@ -60,6 +60,8 @@ This document provides hyperlinks to the specific code files and line numbers im
 
 ### Admin can deactivate a user (5pts)
 
+- [AdminController.php - toggleUserStatus method](src/controllers/AdminController.php#L593)
+- [User.php - updateStatus method](src/models/User.php#L194)
 - [AdminController.php - deleteUser method](src/controllers/AdminController.php#L650)
 - [User.php - delete method](src/models/User.php#L150)
 

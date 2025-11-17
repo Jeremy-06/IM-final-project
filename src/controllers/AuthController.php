@@ -54,29 +54,37 @@ class AuthController {
         
         // Verify credentials with clearer errors
         $user = $this->userModel->findByEmail($email);
-        if ($user && password_verify($password, $user['password_hash'])) {
-            Session::set('user_id', $user['id']);
-            Session::set('email', $user['email']);
-            Session::set('role', $user['role']);
-            Session::set('first_name', $user['first_name']);
-            Session::setFlash('success', 'Login successful');
-            
-            if ($user['role'] === 'admin') {
-                header('Location: admin.php');
-            } else {
-                header('Location: index.php');
+        if ($user) {
+            if (!$user['is_active']) {
+                Session::setFlash('message', 'Your account has been deactivated by an administrator. Please contact support for assistance.');
+                Session::set('email', $email);
+                header('Location: index.php?page=login');
+                exit();
             }
-            exit();
-        } else {
-            if (!$user) {
-                Session::setFlash('message', 'Account not found');
+            
+            if (password_verify($password, $user['password_hash'])) {
+                Session::set('user_id', $user['id']);
+                Session::set('email', $user['email']);
+                Session::set('role', $user['role']);
+                Session::set('first_name', $user['first_name']);
+                Session::setFlash('success', 'Login successful');
+                
+                if ($user['role'] === 'admin') {
+                    header('Location: admin.php');
+                } else {
+                    header('Location: index.php');
+                }
+                exit();
             } else {
                 Session::setFlash('message', 'Incorrect password');
             }
-            Session::set('email', $email);
-            header('Location: index.php?page=login');
-            exit();
+        } else {
+            Session::setFlash('message', 'Account not found');
         }
+        
+        Session::set('email', $email);
+        header('Location: index.php?page=login');
+        exit();
     }
     
     public function showRegister() {

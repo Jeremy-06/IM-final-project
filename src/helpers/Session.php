@@ -88,7 +88,7 @@ class Session {
     
     /**
      * Check if the currently logged-in user still exists in database
-     * If user was deleted, destroy session and redirect to login
+     * If user was deleted or deactivated, destroy session and redirect to login
      */
     public static function validateUserExists() {
         if (!self::isLoggedIn()) {
@@ -100,10 +100,11 @@ class Session {
         $userId = self::getUserId();
         $user = $userModel->findById($userId);
         
-        if (!$user) {
-            // User was deleted, destroy session and redirect
+        if (!$user || !$user['is_active']) {
+            // User was deleted or deactivated, destroy session and redirect
             self::destroy();
-            self::setFlash('message', 'Your account has been deleted. Please contact support if you believe this is an error.');
+            $message = !$user ? 'Your account has been deleted.' : 'Your account has been deactivated.';
+            self::setFlash('message', $message . ' Please contact support if you believe this is an error.');
             header('Location: index.php?page=login');
             exit();
         }

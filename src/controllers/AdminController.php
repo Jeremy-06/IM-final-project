@@ -590,6 +590,49 @@ class AdminController {
         include __DIR__ . '/../views/admin/user_edit.php';
     }
 
+    public function toggleUserStatus() {
+        if (!isset($_GET['id'])) {
+            header('Location: admin.php?page=users');
+            exit();
+        }
+        $id = intval($_GET['id']);
+        
+        // Prevent deactivating self
+        if ($id === Session::getUserId()) {
+            Session::setFlash('message', 'You cannot deactivate your own account');
+            header('Location: admin.php?page=users');
+            exit();
+        }
+        
+        // Get current user status
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            Session::setFlash('message', 'User not found');
+            header('Location: admin.php?page=users');
+            exit();
+        }
+        
+        // Check if deactivating the last admin
+        if ($user['role'] === 'admin' && $user['is_active']) {
+            $activeAdmins = $this->userModel->countAdmins();
+            if ($activeAdmins <= 1) {
+                Session::setFlash('message', 'Cannot deactivate the last active admin account. At least one admin must remain active.');
+                header('Location: admin.php?page=users');
+                exit();
+            }
+        }
+        
+        $newStatus = $user['is_active'] ? 0 : 1;
+        if ($this->userModel->updateStatus($id, $newStatus)) {
+            $action = $newStatus ? 'activated' : 'deactivated';
+            Session::setFlash('success', 'User account ' . $action . ' successfully');
+        } else {
+            Session::setFlash('message', 'Failed to update user status');
+        }
+        header('Location: admin.php?page=users');
+        exit();
+    }
+
     public function deleteUser() {
         if (!isset($_GET['id'])) {
             header('Location: admin.php?page=users');

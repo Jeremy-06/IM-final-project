@@ -101,6 +101,7 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                         Role <?php if (($_GET['sort'] ?? '') === 'role') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
                     </a>
                 </th>
+                <th>Status</th>
                 <th>
                     <a href="admin.php?page=users&sort=created_at&order=<?php echo ($_GET['sort'] ?? 'created_at') === 'created_at' && ($_GET['order'] ?? 'DESC') === 'ASC' ? 'DESC' : 'ASC'; ?><?php echo isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : ''; ?><?php echo isset($_GET['role']) ? '&role=' . htmlspecialchars($_GET['role']) : ''; ?>" class="text-white text-decoration-none">
                         Registered <?php if (($_GET['sort'] ?? 'created_at') === 'created_at') echo ($_GET['order'] ?? 'DESC') === 'ASC' ? '▲' : '▼'; ?>
@@ -129,31 +130,61 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                         <span class="badge bg-info"><i class="fas fa-user me-1"></i>Customer</span>
                     <?php endif; ?>
                 </td>
+                <td>
+                    <?php if ($u['is_active']): ?>
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>
+                    <?php else: ?>
+                        <span class="badge bg-secondary"><i class="fas fa-ban me-1"></i>Inactive</span>
+                    <?php endif; ?>
+                </td>
                 <td><?php echo date('M d, Y', strtotime($u['created_at'])); ?></td>
                 <td>
                     <?php 
                     $canDelete = true;
+                    $canToggle = true;
                     $disabledReason = '';
                     
                     // Check if it's the current user
                     if ($u['id'] === Session::getUserId()) {
-                        $canDelete = false;
-                        $disabledReason = 'Cannot delete yourself';
+                        $canToggle = false;
+                        $disabledReason = 'Cannot deactivate yourself';
                     }
-                    // Check if it's the last admin
-                    elseif ($u['role'] === 'admin' && $adminCount <= 1) {
-                        $canDelete = false;
-                        $disabledReason = 'Cannot delete the last admin';
+                    // Check if it's the last active admin
+                    elseif ($u['role'] === 'admin' && $u['is_active'] && $adminCount <= 1) {
+                        $canToggle = false;
+                        $disabledReason = 'Cannot deactivate the last admin';
                     }
                     ?>
                     
-                    <?php if ($canDelete): ?>
+                    <?php if ($canDelete && $canToggle): ?>
                     <div class="btn-group" role="group">
                         <a href="admin.php?page=edit_user&id=<?php echo $u['id']; ?>" 
                            class="btn btn-sm" 
                            style="background: linear-gradient(135deg, #b19cd9 0%, #d6b6ff 100%); color: white; border: none; border-radius: 20px 0 0 20px; padding: 8px 16px;"
                            title="Edit">
                             <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="admin.php?page=toggle_user_status&id=<?php echo $u['id']; ?>" 
+                           class="btn btn-sm <?php echo $u['is_active'] ? 'btn-warning' : 'btn-success'; ?>" 
+                           style="color: white; border: none; padding: 8px 16px;"
+                           title="<?php echo $u['is_active'] ? 'Deactivate' : 'Activate'; ?>">
+                            <i class="fas fa-<?php echo $u['is_active'] ? 'ban' : 'check'; ?>"></i>
+                        </a>
+                        <button type="button"
+                           class="btn btn-sm delete-user-btn"
+                           data-user-id="<?php echo $u['id']; ?>"
+                           style="background: #dc3545; color: white; border: none; border-radius: 0 20px 20px 0; padding: 8px 16px;"
+                           title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <?php elseif ($canToggle): ?>
+                    <div class="btn-group" role="group">
+                        <a href="admin.php?page=toggle_user_status&id=<?php echo $u['id']; ?>" 
+                           class="btn btn-sm <?php echo $u['is_active'] ? 'btn-warning' : 'btn-success'; ?>" 
+                           style="color: white; border: none; border-radius: 20px 0 0 20px; padding: 8px 16px;"
+                           title="<?php echo $u['is_active'] ? 'Deactivate' : 'Activate'; ?>">
+                            <i class="fas fa-<?php echo $u['is_active'] ? 'ban' : 'check'; ?>"></i>
                         </a>
                         <button type="button"
                            class="btn btn-sm delete-user-btn"

@@ -76,6 +76,10 @@ switch ($page) {
         $controller->deleteUser();
         break;
         
+    case 'toggle_user_status':
+        $controller->toggleUserStatus();
+        break;
+        
     case 'categories':
         $controller->categories();
         break;

@@ -75,7 +75,7 @@ class UserController {
         if (!empty($_FILES['profile_picture']['name'])) {
             // Get current user to get old profile picture path
             $user = $this->userModel->findById($userId);
-            $oldImagePath = $user['profile_picture'] ?? null;
+            $oldImagePath = $user['profile_picture'] ? 'profiles/' . $user['profile_picture'] : null;
             
             $uploadResult = FileUpload::uploadUserProfile($_FILES['profile_picture'], $userId, $oldImagePath);
             
