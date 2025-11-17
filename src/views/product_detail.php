@@ -131,6 +131,9 @@ function render_stars($rating, $totalReviews = 0) {
                 <h5 style="color: var(--purple-dark); font-weight: 700; margin-bottom: 1rem;"><i class="fas fa-info-circle me-2"></i>Product Description</h5>
                 <p style="color: var(--text-primary); line-height: 1.8; font-size: 1.05rem;"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
                 <hr style="border-top: 2px solid var(--purple-light); margin: 1.5rem 0;">
+                <div class="mb-3">
+                    <span style="color: var(--purple-dark); font-weight: 700; font-size: 1.1rem;"><i class="fas fa-shopping-cart me-2"></i>Sold: <?php echo number_format($totalSold); ?> units</span>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="d-flex align-items-center p-3" style="background: linear-gradient(135deg, rgba(139, 95, 191, 0.1) 0%, rgba(139, 95, 191, 0.05) 100%); border-radius: 15px;">

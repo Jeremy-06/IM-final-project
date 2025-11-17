@@ -923,6 +923,14 @@ class AdminController {
                     $endDate = date('Y-m-d 23:59:59');
                 }
                 break;
+                
+            case 'all_time':
+                $salesData = $this->orderModel->getAllTimeSales();
+                $reportTitle = 'All Time Sales Report';
+                $reportPeriod = 'All Time';
+                $startDate = null;
+                $endDate = null;
+                break;
         }
         
         // Get top selling products for the period

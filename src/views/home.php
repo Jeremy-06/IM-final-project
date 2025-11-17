@@ -15,6 +15,14 @@ if (!isset($categories)) {
     $categories = $categoryModel->getActive();
 }
 
+if (!isset($sortBy)) {
+    $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'purchases';
+}
+
+if (!isset($categoryId)) {
+    $categoryId = isset($_GET['category']) && !empty($_GET['category']) ? (int)$_GET['category'] : null;
+}
+
 // Helper function to render star ratings
 function render_stars_home($rating, $reviewCount) {
     $rating = floatval($rating);
@@ -55,14 +63,27 @@ function render_stars_home($rating, $reviewCount) {
 <!-- Featured Products Section -->
 <div class="row mb-5">
     <div class="col-md-12 mb-4 text-center">
-        <h2 class="mb-2" style="color: var(--purple-dark); font-weight: 800; font-size: 2.5rem;">Featured Collection</h2>
-        <p class="text-muted" style="font-size: 1.1rem;">Our most loved plushies picked just for you</p>
+        <h2 class="mb-2" style="color: var(--purple-dark); font-weight: 800; font-size: 2.5rem;">Featured Products</h2>
+        <p class="text-muted" style="font-size: 1.1rem;">Discover our most popular and highly rated plushies</p>
+        
+        <!-- Sorting Section -->
+        <div class="d-flex justify-content-center gap-2 flex-wrap mt-4 mb-2">
+            <a href="?sort=purchases" class="btn sort-btn <?= $sortBy === 'purchases' ? 'active' : '' ?>" style="border-radius: 25px; padding: 0.5rem 1.5rem; font-weight: 600; transition: all 0.3s;">
+                <i class="fas fa-shopping-cart me-1"></i>Most Purchased
+            </a>
+            <a href="?sort=average_rating" class="btn sort-btn <?= $sortBy === 'average_rating' ? 'active' : '' ?>" style="border-radius: 25px; padding: 0.5rem 1.5rem; font-weight: 600; transition: all 0.3s;">
+                <i class="fas fa-star me-1"></i>Top Rated
+            </a>
+            <a href="?sort=selling_price" class="btn sort-btn <?= $sortBy === 'selling_price' ? 'active' : '' ?>" style="border-radius: 25px; padding: 0.5rem 1.5rem; font-weight: 600; transition: all 0.3s;">
+                <i class="fas fa-tag me-1"></i>Price: Low to High
+            </a>
+        </div>
     </div>
 </div>
 
 <div class="row g-4">
     <?php if (!empty($products)): ?>
-        <?php foreach (array_slice($products, 0, 8) as $product): ?>
+        <?php foreach ($products as $product): ?>
         <div class="col-lg-3 col-md-4 col-sm-6">
             <div class="card h-100 shadow-sm product-card" style="border-radius: 20px; overflow: hidden;">
                 <div class="position-relative">
@@ -104,6 +125,9 @@ function render_stars_home($rating, $reviewCount) {
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h4 class="mb-0 fw-bold" style="color: var(--purple-dark); font-size: 1.5rem;">₱<?php echo number_format($product['selling_price'], 2); ?></h4>
                         </div>
+                        <div class="mb-3">
+                            <small style="color: var(--text-secondary); font-weight: 600;"><i class="fas fa-shopping-cart me-1"></i>Sold: <?php echo number_format($product['total_purchases']); ?> units</small>
+                        </div>
                         
                         <a href="index.php?page=product&id=<?php echo $product['id']; ?>" class="btn w-100" style="background: linear-gradient(135deg, var(--purple-dark) 0%, var(--pink-medium) 100%); color: white; border-radius: 15px; padding: 0.8rem; font-weight: 700;">
                             <i class="fas fa-eye me-2"></i>View Details
@@ -132,6 +156,17 @@ function render_stars_home($rating, $reviewCount) {
 <style>
 .product-card { transition: all 0.3s ease; }
 .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 35px rgba(139, 95, 191, 0.2) !important; }
+
+.sort-btn {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: var(--purple-dark);
+    border: 2px solid var(--purple-light);
+}
+.sort-btn:hover, .sort-btn.active {
+    background: linear-gradient(135deg, var(--purple-dark) 0%, var(--pink-medium) 100%) !important;
+    color: white !important;
+    border-color: var(--purple-dark) !important;
+}
 </style>
 
 <?php

@@ -189,6 +189,8 @@ class ProductController {
                         $hasPurchasedProduct = $this->orderModel->hasUserPurchasedProduct($userId, $productId);
                     }
     
+                    $totalSold = $this->productModel->getTotalSold($productId);
+    
                     include __DIR__ . '/../views/product_detail.php';                }
 
     public function addReview() {

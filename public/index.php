@@ -140,7 +140,12 @@ switch ($page) {
     default:
         $productModel = new Product();
         $categoryModel = new Category();
-        $products = $productModel->getActiveProducts();
+        
+        // Handle sorting and filtering
+        $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'purchases';
+        $categoryId = isset($_GET['category']) && !empty($_GET['category']) ? (int)$_GET['category'] : null;
+        
+        $products = $productModel->getFeaturedProducts($sortBy, $categoryId, 8);
         $categories = $categoryModel->getActive();
         include __DIR__ . '/../src/views/home.php';
         break;

@@ -688,30 +688,94 @@ class Product extends BaseModel {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function setProductCategories($productId, $categoryIds) {
-        $this->conn->begin_transaction();
-        try {
-            // Delete existing categories
-            $delSql = "DELETE FROM product_categories WHERE product_id = ?";
-            $delStmt = $this->conn->prepare($delSql);
-            $delStmt->bind_param('i', $productId);
-            $delStmt->execute();
-            
-            // Insert new categories
-            if (!empty($categoryIds) && is_array($categoryIds)) {
-                foreach ($categoryIds as $categoryId) {
-                    $insSql = "INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)";
-                    $insStmt = $this->conn->prepare($insSql);
-                    $insStmt->bind_param('ii', $productId, $categoryId);
-                    $insStmt->execute();
-                }
-            }
-            
-            $this->conn->commit();
-            return true;
-        } catch (Exception $e) {
-            $this->conn->rollback();
-            return false;
+    public function getFeaturedProducts($sortBy = 'purchases', $categoryId = null, $limit = 10, $startDate = null, $endDate = null) {
+        $allowedSorts = ['purchases', 'average_rating', 'selling_price'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'purchases';
         }
+
+        $subSql = "SELECT oi.product_id, SUM(oi.quantity) as total_purchases
+                    FROM order_items oi
+                    INNER JOIN orders o ON oi.order_id = o.id
+                    WHERE o.order_status = 'completed'";
+        
+        $params = [];
+        $types = '';
+
+        if ($startDate && $endDate) {
+            $subSql .= " AND o.created_at >= ? AND o.created_at <= ?";
+            $params[] = $startDate;
+            $params[] = $endDate;
+            $types .= 'ss';
+        }
+
+        $subSql .= " GROUP BY oi.product_id";
+
+        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+                       GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
+                       GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids,
+                       COALESCE(purchase_count.total_purchases, 0) as total_purchases
+                FROM products p 
+                LEFT JOIN product_categories pc ON p.id = pc.product_id
+                LEFT JOIN categories c ON pc.category_id = c.id 
+                LEFT JOIN suppliers s ON p.supplier_id = s.id
+                INNER JOIN inventory i ON p.id = i.product_id 
+                LEFT JOIN ($subSql) purchase_count ON p.id = purchase_count.product_id
+                WHERE p.is_active = 1 AND i.quantity_on_hand > 0";
+
+        if ($categoryId) {
+            $sql .= " AND pc.category_id = ?";
+            $params[] = $categoryId;
+            $types .= 'i';
+        }
+
+        $sql .= " GROUP BY p.id";
+
+        if ($sortBy === 'purchases') {
+            $sql .= " ORDER BY total_purchases DESC, p.created_at DESC";
+        } elseif ($sortBy === 'average_rating') {
+            $sql .= " ORDER BY p.average_rating DESC, p.review_count DESC";
+        } elseif ($sortBy === 'selling_price') {
+            $sql .= " ORDER BY p.selling_price ASC";
+        }
+
+        $sql .= " LIMIT ?";
+        $params[] = $limit;
+        $types .= 'i';
+
+        $stmt = $this->conn->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $products = $result->fetch_all(MYSQLI_ASSOC);
+
+        // Process category data
+        foreach ($products as &$product) {
+            $product['categories'] = [];
+            if (!empty($product['category_names'])) {
+                $names = explode(', ', $product['category_names']);
+                $ids = explode(',', $product['category_ids']);
+                $product['categories'] = array_combine($ids, $names);
+            }
+            $product['category_name'] = $product['category_names'];
+            unset($product['category_names'], $product['category_ids']);
+        }
+
+        return $products;
+    }
+
+    public function getTotalSold($productId) {
+        $sql = "SELECT SUM(oi.quantity) as total_sold
+                FROM order_items oi
+                INNER JOIN orders o ON oi.order_id = o.id
+                WHERE oi.product_id = ? AND o.order_status = 'completed'";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        return $row['total_sold'] ?? 0;
     }
 }

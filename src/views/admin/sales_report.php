@@ -43,6 +43,10 @@ require_once __DIR__ . '/../../helpers/Session.php';
                 
                 <!-- Quick Report Buttons -->
                 <div class="btn-group mb-3 d-flex flex-wrap" role="group" style="gap: 10px;">
+                    <a href="admin.php?page=sales_report&type=all_time" 
+                       class="btn btn-outline-primary <?php echo ($reportType == 'all_time') ? 'active' : ''; ?>">
+                        <i class="fas fa-infinity me-1"></i>All Time
+                    </a>
                     <a href="admin.php?page=sales_report&type=daily" 
                        class="btn btn-outline-primary <?php echo ($reportType == 'daily') ? 'active' : ''; ?>">
                         <i class="fas fa-calendar-day me-1"></i> Today

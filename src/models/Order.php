@@ -693,7 +693,8 @@ class Order extends BaseModel {
                 CASE WHEN p.id IS NULL THEN 1 ELSE 0 END as product_deleted
                 FROM order_items oi
                 INNER JOIN orders o ON oi.order_id = o.id
-                LEFT JOIN products p ON oi.product_id = p.id
+                INNER JOIN products p ON oi.product_id = p.id AND p.is_active = 1
+                INNER JOIN inventory i ON p.id = i.product_id AND i.quantity_on_hand > 0
                 WHERE o.order_status = 'completed'";
         
         $params = [];
@@ -837,31 +838,31 @@ class Order extends BaseModel {
         return $salesData;
     }
 
-    public function getOrderItemById($orderItemId) {
-        $sql = "SELECT oi.*, o.customer_id, o.order_status
-                FROM order_items oi
-                JOIN orders o ON oi.order_id = o.id
-                WHERE oi.id = ?";
+    public function getAllTimeSales() {
+        $sql = "SELECT COUNT(*) as order_count, SUM(total_amount) as total_sales, AVG(total_amount) as avg_order_value
+                FROM orders WHERE order_status = 'completed'";
         $stmt = $this->db->prepare($sql);
         
         if ($stmt === false) {
-            ErrorHandler::log("getOrderItemById prepare failed: " . $this->db->getError(), 'ERROR');
-            return null;
+            ErrorHandler::log("getAllTimeSales prepare failed: " . $this->db->getError(), 'ERROR');
+            return ['order_count' => 0, 'total_sales' => 0, 'avg_order_value' => 0];
         }
-        mysqli_stmt_bind_param($stmt, 'i', $orderItemId);
+        
         if (!mysqli_stmt_execute($stmt)) {
-            ErrorHandler::log("getOrderItemById execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            ErrorHandler::log("getAllTimeSales execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
             mysqli_stmt_close($stmt);
-            return null;
+            return ['order_count' => 0, 'total_sales' => 0, 'avg_order_value' => 0];
         }
+        
         $result = mysqli_stmt_get_result($stmt);
         if ($result === false) {
-            ErrorHandler::log("getOrderItemById get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            ErrorHandler::log("getAllTimeSales get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
             mysqli_stmt_close($stmt);
-            return null;
+            return ['order_count' => 0, 'total_sales' => 0, 'avg_order_value' => 0];
         }
-        $item = mysqli_fetch_assoc($result);
+        
+        $data = mysqli_fetch_assoc($result);
         mysqli_stmt_close($stmt);
-        return $item;
+        return $data ?: ['order_count' => 0, 'total_sales' => 0, 'avg_order_value' => 0];
     }
 }
