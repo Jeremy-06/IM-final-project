@@ -4,6 +4,11 @@ ob_start();
 
 require_once __DIR__ . '/../../helpers/Session.php';
 require_once __DIR__ . '/../../helpers/CSRF.php';
+
+// Get stored form data if available (for repopulation on validation errors)
+$formData = Session::get('form_data') ?? [];
+// Clear form data immediately to prevent it from affecting future requests
+Session::remove('form_data');
 ?>
 
 <div class="container-fluid">
@@ -33,12 +38,12 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                             <div class="form-group mb-3">
                                 <label for="product_name"><i class="fas fa-box"></i> Product Name *</label>
                                 <input type="text" class="form-control" id="product_name" name="product_name"
-                                       value="<?php echo htmlspecialchars($product['product_name']); ?>" required>
+                                       value="<?php echo htmlspecialchars($formData['product_name'] ?? $product['product_name']); ?>" required>
                             </div>
 
                             <div class="form-group mb-3">
                                 <label for="description"><i class="fas fa-align-left"></i> Description *</label>
-                                <textarea class="form-control" id="description" name="description" rows="4" required><?php echo htmlspecialchars($product['description']); ?></textarea>
+                                <textarea class="form-control" id="description" name="description" rows="4" required><?php echo htmlspecialchars($formData['description'] ?? $product['description']); ?></textarea>
                             </div>
 
                             <div class="row">
@@ -46,14 +51,20 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                     <div class="form-group mb-3">
                                         <label><i class="fas fa-tag"></i> Categories *</label>
                                         <div class="row">
-                                            <?php foreach ($categories as $category): ?>
+                                            <?php 
+                                            // Only use form data if categories were actually submitted and not empty
+                                            $selectedCategories = (isset($formData['categories']) && is_array($formData['categories']) && !empty($formData['categories'])) 
+                                                ? $formData['categories'] 
+                                                : array_column($productCategories, 'id');
+                                            foreach ($categories as $category): 
+                                            ?>
                                                 <div class="col-md-6">
                                                     <div class="form-check">
                                                         <input class="form-check-input" type="checkbox" 
                                                                id="category_<?php echo $category['id']; ?>" 
                                                                name="categories[]" 
                                                                value="<?php echo $category['id']; ?>"
-                                                               <?php echo (isset($productCategories) && in_array($category['id'], array_column($productCategories, 'id'))) ? 'checked' : ''; ?>>
+                                                               <?php echo (in_array($category['id'], $selectedCategories)) ? 'checked' : ''; ?>>
                                                         <label class="form-check-label" for="category_<?php echo $category['id']; ?>">
                                                             <?php echo htmlspecialchars($category['category_name']); ?>
                                                         </label>
@@ -71,7 +82,7 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                             <option value="">Select Supplier (Optional)</option>
                                             <?php foreach ($suppliers as $supplier): ?>
                                                 <option value="<?php echo $supplier['id']; ?>"
-                                                    <?php echo ($product['supplier_id'] == $supplier['id']) ? 'selected' : ''; ?>>
+                                                    <?php echo (($formData['supplier_id'] ?? $product['supplier_id']) == $supplier['id']) ? 'selected' : ''; ?>>
                                                     <?php echo htmlspecialchars($supplier['supplier_name']); ?>
                                                 </option>
                                             <?php endforeach; ?>
@@ -85,14 +96,14 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                     <div class="form-group mb-3">
                                         <label for="cost_price"><i class="fas fa-dollar-sign"></i> Cost Price *</label>
                                         <input type="number" step="0.01" class="form-control" id="cost_price" name="cost_price"
-                                               value="<?php echo $product['cost_price']; ?>" required>
+                                               value="<?php echo $formData['cost_price'] ?? $product['cost_price']; ?>" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label for="selling_price"><i class="fas fa-money-bill-wave"></i> Selling Price *</label>
                                         <input type="number" step="0.01" class="form-control" id="selling_price" name="selling_price"
-                                               value="<?php echo $product['selling_price']; ?>" required>
+                                               value="<?php echo $formData['selling_price'] ?? $product['selling_price']; ?>" required>
                                     </div>
                                 </div>
                             </div>
@@ -102,7 +113,7 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                     <div class="form-group mb-3">
                                         <label for="quantity"><i class="fas fa-cubes"></i> Quantity *</label>
                                         <input type="number" class="form-control" id="quantity" name="quantity"
-                                               value="<?php echo $inventory; ?>" required>
+                                               value="<?php echo $formData['quantity'] ?? $inventory; ?>" required>
                                         <small class="form-text text-muted">
                                             <i class="fas fa-info-circle"></i> Expense recorded if increased
                                         </small>
@@ -112,8 +123,8 @@ require_once __DIR__ . '/../../helpers/CSRF.php';
                                     <div class="form-group mb-3">
                                         <label for="is_active"><i class="fas fa-toggle-on"></i> Status *</label>
                                         <select class="form-control" id="is_active" name="is_active" required>
-                                            <option value="1" <?php echo ($product['is_active'] == 1) ? 'selected' : ''; ?>>Active</option>
-                                            <option value="0" <?php echo ($product['is_active'] == 0) ? 'selected' : ''; ?>>Inactive</option>
+                                            <option value="1" <?php echo (($formData['is_active'] ?? $product['is_active']) == 1) ? 'selected' : ''; ?>>Active</option>
+                                            <option value="0" <?php echo (($formData['is_active'] ?? $product['is_active']) == 0) ? 'selected' : ''; ?>>Inactive</option>
                                         </select>
                                     </div>
                                 </div>
@@ -464,6 +475,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission with loading state
     form.addEventListener('submit', function(e) {
+        // Validate categories
+        const categoryCheckboxes = form.querySelectorAll('input[name="categories[]"]:checked');
+        if (categoryCheckboxes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one category for the product.');
+            // Scroll to categories section
+            const categoriesSection = form.querySelector('label[for="supplier_id"]').closest('.col-md-6').previousElementSibling;
+            categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
 

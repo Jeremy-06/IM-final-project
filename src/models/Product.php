@@ -92,41 +92,63 @@ class Product extends BaseModel {
             $types .= 'i';
             
             $sql = "UPDATE products SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            // Debug logging
+            error_log("Product update SQL: " . $sql);
+            error_log("Product update params: " . json_encode($params));
+            error_log("Product update types: " . $types);
+            
             $stmt = $this->conn->prepare($sql);
             $stmt->bind_param($types, ...$params);
-            $stmt->execute();
+            $result = $stmt->execute();
+            
+            if (!$result) {
+                error_log("Product update failed: " . $this->conn->error);
+                $this->conn->rollback();
+                return false;
+            }
             
             // Update categories
             $delSql = "DELETE FROM product_categories WHERE product_id = ?";
             $delStmt = $this->conn->prepare($delSql);
             $delStmt->bind_param('i', $id);
-            $delStmt->execute();
+            if (!$delStmt->execute()) {
+                error_log("Category delete failed: " . $this->conn->error);
+                $this->conn->rollback();
+                return false;
+            }
             
             if (!empty($categoryIds) && is_array($categoryIds)) {
                 foreach ($categoryIds as $categoryId) {
                     $catSql = "INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)";
                     $catStmt = $this->conn->prepare($catSql);
                     $catStmt->bind_param('ii', $id, $categoryId);
-                    $catStmt->execute();
+                    if (!$catStmt->execute()) {
+                        error_log("Category insert failed: " . $this->conn->error);
+                        $this->conn->rollback();
+                        return false;
+                    }
                 }
             }
             
             $this->conn->commit();
             return true;
         } catch (Exception $e) {
+            error_log("Product update exception: " . $e->getMessage());
             $this->conn->rollback();
             return false;
         }
     }
     
     public function getWithCategory() {
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand, 
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand, 
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 LEFT JOIN inventory i ON p.id = i.product_id 
                 WHERE p.is_active = 1 
                 GROUP BY p.id
@@ -163,13 +185,14 @@ class Product extends BaseModel {
             $sortColumn = 'i.quantity_on_hand';
         }
         
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 LEFT JOIN inventory i ON p.id = i.product_id";
         
         $whereConditions = [];
@@ -215,13 +238,14 @@ class Product extends BaseModel {
     }
     
     public function getActiveProducts() {
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE p.is_active = 1 AND i.quantity_on_hand > 0 
                 GROUP BY p.id
@@ -245,13 +269,14 @@ class Product extends BaseModel {
     }
     
     public function getActiveProductsPaginated($limit = 9, $offset = 0) {
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE p.is_active = 1 AND i.quantity_on_hand > 0 
                 GROUP BY p.id
@@ -288,7 +313,7 @@ class Product extends BaseModel {
     }
     
     public function getByCategory($categoryId) {
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
@@ -296,6 +321,7 @@ class Product extends BaseModel {
                 LEFT JOIN product_categories pc2 ON p.id = pc2.product_id
                 LEFT JOIN categories c ON pc2.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE pc.category_id = ? AND p.is_active = 1 AND i.quantity_on_hand > 0 
                 GROUP BY p.id
@@ -322,7 +348,7 @@ class Product extends BaseModel {
     }
     
     public function getByCategoryPaginated($categoryId, $limit = 9, $offset = 0) {
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
@@ -330,6 +356,7 @@ class Product extends BaseModel {
                 LEFT JOIN product_categories pc2 ON p.id = pc2.product_id
                 LEFT JOIN categories c ON pc2.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 INNER JOIN inventory i ON p.id = i.product_id 
                 WHERE pc.category_id = ? AND p.is_active = 1 AND i.quantity_on_hand > 0 
                 GROUP BY p.id
@@ -370,13 +397,14 @@ class Product extends BaseModel {
     
     public function search($keyword) {
         $searchTerm = "%{$keyword}%";
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 LEFT JOIN inventory i ON p.id = i.product_id 
                 WHERE (p.product_name LIKE ? OR p.description LIKE ?) AND p.is_active = 1 
                 GROUP BY p.id
@@ -404,13 +432,14 @@ class Product extends BaseModel {
     
     public function searchPaginated($keyword, $limit = 9, $offset = 0) {
         $searchTerm = "%{$keyword}%";
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 LEFT JOIN inventory i ON p.id = i.product_id 
                 WHERE (p.product_name LIKE ? OR p.description LIKE ?) AND p.is_active = 1 
                 GROUP BY p.id
@@ -467,13 +496,14 @@ class Product extends BaseModel {
     }
     
     public function findByIdWithDetails($productId) {
-        $sql = "SELECT p.*, s.supplier_name,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids
                 FROM products p 
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id 
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE p.id = ? 
                 GROUP BY p.id
                 LIMIT 1";
@@ -711,7 +741,7 @@ class Product extends BaseModel {
 
         $subSql .= " GROUP BY oi.product_id";
 
-        $sql = "SELECT p.*, s.supplier_name, i.quantity_on_hand,
+        $sql = "SELECT p.*, COALESCE(pi.image_path, p.img_path) as img_path, s.supplier_name, i.quantity_on_hand,
                        GROUP_CONCAT(DISTINCT c.category_name ORDER BY c.category_name SEPARATOR ', ') as category_names,
                        GROUP_CONCAT(DISTINCT c.id ORDER BY c.id SEPARATOR ',') as category_ids,
                        COALESCE(purchase_count.total_purchases, 0) as total_purchases
@@ -719,6 +749,7 @@ class Product extends BaseModel {
                 LEFT JOIN product_categories pc ON p.id = pc.product_id
                 LEFT JOIN categories c ON pc.category_id = c.id 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 INNER JOIN inventory i ON p.id = i.product_id 
                 LEFT JOIN ($subSql) purchase_count ON p.id = purchase_count.product_id
                 WHERE p.is_active = 1 AND i.quantity_on_hand > 0";

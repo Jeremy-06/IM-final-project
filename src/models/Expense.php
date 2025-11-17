@@ -83,10 +83,23 @@ class Expense extends BaseModel {
                 COUNT(*) as expense_count,
                 SUM(amount) as total_expenses,
                 AVG(amount) as avg_expense
-                FROM expenses 
-                WHERE expense_date >= ? AND expense_date <= ?";
+                FROM expenses";
+        
+        $params = [];
+        $types = '';
+        
+        if ($startDate && $endDate) {
+            $sql .= " WHERE expense_date >= ? AND expense_date <= ?";
+            $params = [$startDate, $endDate];
+            $types = 'ss';
+        }
+        
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ss', $startDate, $endDate);
+        
+        if (!empty($params)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_assoc($result);
@@ -97,12 +110,25 @@ class Expense extends BaseModel {
                 category,
                 SUM(amount) as total,
                 COUNT(*) as count
-                FROM expenses 
-                WHERE expense_date >= ? AND expense_date <= ?
-                GROUP BY category
-                ORDER BY total DESC";
+                FROM expenses";
+        
+        $params = [];
+        $types = '';
+        
+        if ($startDate && $endDate) {
+            $sql .= " WHERE expense_date >= ? AND expense_date <= ?";
+            $params = [$startDate, $endDate];
+            $types = 'ss';
+        }
+        
+        $sql .= " GROUP BY category ORDER BY total DESC";
+        
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ss', $startDate, $endDate);
+        
+        if (!empty($params)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);

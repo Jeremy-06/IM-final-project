@@ -162,10 +162,11 @@ class Order extends BaseModel {
         $sql = "SELECT oi.*, 
                 p.is_active, 
                 p.product_name as current_product_name, 
-                p.img_path as current_product_image,
+                COALESCE(pi.image_path, p.img_path) as current_product_image,
                 oi.has_reviewed
                 FROM order_items oi 
                 LEFT JOIN products p ON oi.product_id = p.id 
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
                 WHERE oi.order_id = ?";
         $stmt = $this->db->prepare($sql);
         
@@ -194,8 +195,8 @@ class Order extends BaseModel {
             
             $item['display_name'] = !empty($snapshotName) ? $snapshotName : 
                                    (!empty($item['current_product_name']) ? $item['current_product_name'] : 'Deleted Product');
-            $item['display_image'] = !empty($snapshotImage) ? $snapshotImage : 
-                                    (!empty($item['current_product_image']) ? $item['current_product_image'] : '');
+            $item['display_image'] = !empty($item['current_product_image']) ? $item['current_product_image'] : 
+                                    (!empty($snapshotImage) ? $snapshotImage : '');
             
             $item['is_deleted'] = empty($item['current_product_name']);
             $item['use_placeholder'] = $item['is_deleted'] || ($item['is_active'] == 0);
@@ -685,16 +686,17 @@ class Order extends BaseModel {
     public function getTopSellingProducts($startDate = null, $endDate = null, $limit = 10) {
         $sql = "SELECT 
                 oi.product_name,
-                COALESCE(NULLIF(oi.product_image, ''), p.img_path) as product_image,
+                COALESCE(pi.image_path, NULLIF(oi.product_image, ''), p.img_path) as product_image,
                 SUM(oi.quantity) as total_quantity,
                 SUM(oi.item_total) as total_revenue,
                 COUNT(DISTINCT oi.order_id) as order_count,
-                p.is_active as product_active,
+                COALESCE(p.is_active, 0) as product_active,
                 CASE WHEN p.id IS NULL THEN 1 ELSE 0 END as product_deleted
                 FROM order_items oi
                 INNER JOIN orders o ON oi.order_id = o.id
-                INNER JOIN products p ON oi.product_id = p.id AND p.is_active = 1
-                INNER JOIN inventory i ON p.id = i.product_id AND i.quantity_on_hand > 0
+                LEFT JOIN products p ON oi.product_id = p.id
+                LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+                LEFT JOIN inventory i ON p.id = i.product_id
                 WHERE o.order_status = 'completed'";
         
         $params = [];
@@ -707,7 +709,7 @@ class Order extends BaseModel {
             $types .= 'ss'; // two strings for start and end date
         }
         
-        $sql .= " GROUP BY oi.product_id, oi.product_name, COALESCE(NULLIF(oi.product_image, ''), p.img_path), p.is_active, CASE WHEN p.id IS NULL THEN 1 ELSE 0 END
+        $sql .= " GROUP BY oi.product_id, oi.product_name, COALESCE(pi.image_path, NULLIF(oi.product_image, ''), p.img_path), COALESCE(p.is_active, 0), CASE WHEN p.id IS NULL THEN 1 ELSE 0 END
                   ORDER BY total_quantity DESC
                   LIMIT ?";
         $params[] = (int)$limit;
@@ -743,19 +745,31 @@ class Order extends BaseModel {
                 FROM orders o
                 INNER JOIN users u ON o.customer_id = u.id
                 LEFT JOIN order_items oi ON o.id = oi.order_id
-                WHERE o.order_status = 'completed'
-                AND o.created_at >= ?
-                AND o.created_at <= ?
-                GROUP BY o.id
-                ORDER BY o.created_at DESC";
+                WHERE o.order_status = 'completed'";
+        
+        $params = [];
+        $types = '';
+        
+        if ($startDate && $endDate) {
+            $sql .= " AND o.created_at >= ? AND o.created_at <= ?";
+            $params[] = $startDate;
+            $params[] = $endDate;
+            $types = 'ss';
+        }
+        
+        $sql .= " GROUP BY o.id ORDER BY o.created_at DESC";
+        
         $stmt = $this->db->prepare($sql);
         
         if ($stmt === false) {
             ErrorHandler::log("getSalesOrdersList prepare failed: " . $this->db->getError(), 'ERROR');
             return [];
         }
-        // 'ss' for two strings
-        mysqli_stmt_bind_param($stmt, 'ss', $startDate, $endDate);
+        
+        if (!empty($params)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        
         if (!mysqli_stmt_execute($stmt)) {
             ErrorHandler::log("getSalesOrdersList execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
             mysqli_stmt_close($stmt);
@@ -811,17 +825,28 @@ class Order extends BaseModel {
         $sql = "SELECT 
                 COUNT(*) as order_count,
                 SUM(total_amount) as total_sales
-                FROM order_history 
-                WHERE created_at >= ? 
-                AND created_at <= ?";
+                FROM order_history";
+        
+        $params = [];
+        $types = '';
+        
+        if ($startDate && $endDate) {
+            $sql .= " WHERE created_at >= ? AND created_at <= ?";
+            $params = [$startDate, $endDate];
+            $types = 'ss';
+        }
+        
         $stmt = $this->db->prepare($sql);
         
         if ($stmt === false) {
             ErrorHandler::log("getSalesReportFromHistory prepare failed: " . $this->db->getError(), 'ERROR');
             return ['order_count' => 0, 'total_sales' => 0];
         }
-        // 'ss' for two strings
-        mysqli_stmt_bind_param($stmt, 'ss', $startDate, $endDate);
+        
+        if (!empty($params)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        
         if (!mysqli_stmt_execute($stmt)) {
             ErrorHandler::log("getSalesReportFromHistory execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
             mysqli_stmt_close($stmt);
@@ -864,5 +889,95 @@ class Order extends BaseModel {
         $data = mysqli_fetch_assoc($result);
         mysqli_stmt_close($stmt);
         return $data ?: ['order_count' => 0, 'total_sales' => 0, 'avg_order_value' => 0];
+    }
+    
+    public function getCompletedOrdersFromHistory($limit = 1000) {
+        $sql = "SELECT * FROM order_history ORDER BY created_at DESC LIMIT ?";
+        $stmt = $this->db->prepare($sql);
+        
+        if ($stmt === false) {
+            ErrorHandler::log("getCompletedOrdersFromHistory prepare failed: " . $this->db->getError(), 'ERROR');
+            return [];
+        }
+        
+        mysqli_stmt_bind_param($stmt, 'i', $limit);
+        
+        if (!mysqli_stmt_execute($stmt)) {
+            ErrorHandler::log("getCompletedOrdersFromHistory execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return [];
+        }
+        
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result === false) {
+            ErrorHandler::log("getCompletedOrdersFromHistory get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return [];
+        }
+        
+        $orders = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        mysqli_stmt_close($stmt);
+        return $orders;
+    }
+    
+    public function getOrderFromHistory($orderId) {
+        $sql = "SELECT * FROM order_history WHERE order_id = ? LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        
+        if ($stmt === false) {
+            ErrorHandler::log("getOrderFromHistory prepare failed: " . $this->db->getError(), 'ERROR');
+            return null;
+        }
+        
+        mysqli_stmt_bind_param($stmt, 'i', $orderId);
+        
+        if (!mysqli_stmt_execute($stmt)) {
+            ErrorHandler::log("getOrderFromHistory execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return null;
+        }
+        
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result === false) {
+            ErrorHandler::log("getOrderFromHistory get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return null;
+        }
+        
+        $order = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
+        return $order;
+    }
+    
+    public function getOrderItemById($orderItemId) {
+        $sql = "SELECT oi.*, o.customer_id, o.order_status, oi.has_reviewed
+                FROM order_items oi
+                INNER JOIN orders o ON oi.order_id = o.id
+                WHERE oi.id = ? LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        
+        if ($stmt === false) {
+            ErrorHandler::log("getOrderItemById prepare failed: " . $this->db->getError(), 'ERROR');
+            return null;
+        }
+        
+        mysqli_stmt_bind_param($stmt, 'i', $orderItemId);
+        
+        if (!mysqli_stmt_execute($stmt)) {
+            ErrorHandler::log("getOrderItemById execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return null;
+        }
+        
+        $result = mysqli_stmt_get_result($stmt);
+        if ($result === false) {
+            ErrorHandler::log("getOrderItemById get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            mysqli_stmt_close($stmt);
+            return null;
+        }
+        
+        $orderItem = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
+        return $orderItem;
     }
 }

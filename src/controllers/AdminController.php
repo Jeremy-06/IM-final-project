@@ -43,9 +43,16 @@ class AdminController {
             }
         }
         
-        // Get completed orders (sales)
+        // Get completed orders (sales) - include both active and archived
         $completedOrders = $this->orderModel->getCompletedOrdersCount();
+        $archivedOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
+        $completedOrders += count($archivedOrders);
+        
+        // Get total sales - include both active and archived
         $totalSales = $this->orderModel->getCompletedOrdersTotal();
+        foreach ($archivedOrders as $order) {
+            $totalSales += (float)$order['total_amount'];
+        }
         
         include __DIR__ . '/../views/admin/dashboard.php';
     }
@@ -69,9 +76,13 @@ class AdminController {
             }
             $validator = new Validation();
             $validator->required('product_name', $_POST['product_name'] ?? '')
-                      ->required('categories', $_POST['categories'] ?? '')
                       ->required('cost_price', $_POST['cost_price'] ?? '')
                       ->required('selling_price', $_POST['selling_price'] ?? '');
+
+            // Check categories separately since it's an array
+            if (!isset($_POST['categories']) || empty($_POST['categories'])) {
+                $validator->errors['categories'] = 'At least one category is required';
+            }
 
             if ($validator->hasErrors()) {
                 // Store form data for repopulation
@@ -213,9 +224,29 @@ class AdminController {
             exit();
         }
         $id = intval($_GET['id']);
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
                 Session::setFlash('message', 'Invalid request');
+                header('Location: admin.php?page=edit_product&id=' . $id);
+                exit();
+            }
+            
+            // Validate required fields
+            $validator = new Validation();
+            $validator->required('product_name', $_POST['product_name'] ?? '')
+                      ->required('cost_price', $_POST['cost_price'] ?? '')
+                      ->required('selling_price', $_POST['selling_price'] ?? '');
+
+            // Check categories separately since it's an array
+            if (!isset($_POST['categories']) || empty($_POST['categories'])) {
+                $validator->errors['categories'] = 'At least one category is required';
+            }
+
+            if ($validator->hasErrors()) {
+                // Store form data for repopulation
+                Session::set('form_data', $_POST);
+                Session::setFlash('message', 'Please fill in all required fields');
                 header('Location: admin.php?page=edit_product&id=' . $id);
                 exit();
             }
@@ -228,6 +259,18 @@ class AdminController {
                 $isActive = isset($_POST['is_active']) ? intval($_POST['is_active']) : 1;
                 $supplierId = !empty($_POST['supplier_id']) ? intval($_POST['supplier_id']) : null;
                 $categoryIds = is_array($_POST['categories']) ? $_POST['categories'] : [$_POST['categories']];
+                
+                // Debug logging
+                ErrorHandler::log('Product update attempt', 'INFO', [
+                    'product_id' => $id,
+                    'is_active' => $isActive,
+                    'supplier_id' => $supplierId,
+                    'category_ids' => $categoryIds,
+                    'product_name' => $_POST['product_name'] ?? 'NOT_SET',
+                    'cost_price' => $_POST['cost_price'] ?? 'NOT_SET',
+                    'selling_price' => $_POST['selling_price'] ?? 'NOT_SET'
+                ]);
+                
                 $ok = $this->productModel->update(
                     $id,
                     $categoryIds,
@@ -241,6 +284,12 @@ class AdminController {
                 );
                 
                 if (!$ok) {
+                    ErrorHandler::log('Product update failed - model returned false', 'ERROR', [
+                        'product_id' => $id,
+                        'is_active' => $isActive,
+                        'supplier_id' => $supplierId,
+                        'category_ids' => $categoryIds
+                    ]);
                     throw new Exception('Failed to update product');
                 }
                 
@@ -926,6 +975,12 @@ class AdminController {
                 
             case 'all_time':
                 $salesData = $this->orderModel->getAllTimeSales();
+                $archivedData = $this->orderModel->getSalesReportFromHistory(null, null);
+                
+                // Combine sales data from active orders and archived orders
+                $salesData['order_count'] = ($salesData['order_count'] ?? 0) + ($archivedData['order_count'] ?? 0);
+                $salesData['total_sales'] = ($salesData['total_sales'] ?? 0) + ($archivedData['total_sales'] ?? 0);
+                
                 $reportTitle = 'All Time Sales Report';
                 $reportPeriod = 'All Time';
                 $startDate = null;
@@ -940,8 +995,14 @@ class AdminController {
         $orders = $this->orderModel->getSalesOrdersList($startDate, $endDate);
         
         // Get expenses for the period
-        $expenseData = $this->expenseModel->getExpensesByPeriod(date('Y-m-d', strtotime($startDate)), date('Y-m-d', strtotime($endDate)));
-        $expensesByCategory = $this->expenseModel->getExpensesByCategoryPeriod(date('Y-m-d', strtotime($startDate)), date('Y-m-d', strtotime($endDate)));
+        if ($startDate && $endDate) {
+            $expenseData = $this->expenseModel->getExpensesByPeriod(date('Y-m-d', strtotime($startDate)), date('Y-m-d', strtotime($endDate)));
+            $expensesByCategory = $this->expenseModel->getExpensesByCategoryPeriod(date('Y-m-d', strtotime($startDate)), date('Y-m-d', strtotime($endDate)));
+        } else {
+            // For all-time reports, get all expenses without date filtering
+            $expenseData = $this->expenseModel->getExpensesByPeriod(null, null);
+            $expensesByCategory = $this->expenseModel->getExpensesByCategoryPeriod(null, null);
+        }
         
         // Calculate profit
         $totalRevenue = $salesData['total_sales'] ?? 0;
@@ -1280,9 +1341,11 @@ class AdminController {
             $images = $this->productModel->getProductImages($productId);
             foreach ($images as $img) {
                 if ($img['id'] == $imageId) {
+                    // Get current categories to preserve them
+                    $currentCategories = array_column($this->productModel->getProductCategories($productId), 'id');
                     $this->productModel->update(
                         $productId,
-                        $product['category_id'],
+                        $currentCategories,
                         $product['product_name'],
                         $product['description'],
                         $product['cost_price'],
@@ -1378,9 +1441,11 @@ class AdminController {
                             
                             // Update legacy img_path if this is the first image
                             if ($isPrimary) {
+                                // Get current categories to preserve them
+                                $currentCategories = array_column($this->productModel->getProductCategories($productId), 'id');
                                 $this->productModel->update(
                                     $productId,
-                                    $product['category_id'],
+                                    $currentCategories,
                                     $product['product_name'],
                                     $product['description'],
                                     $product['cost_price'],
@@ -1482,9 +1547,11 @@ class AdminController {
             if ($newPrimaryImage) {
                 $this->productModel->setPrimaryImage($newPrimaryImage['id']);
                 // Update legacy img_path
+                // Get current categories to preserve them
+                $currentCategories = array_column($this->productModel->getProductCategories($productId), 'id');
                 $this->productModel->update(
                     $productId,
-                    $product['category_id'],
+                    $currentCategories,
                     $product['product_name'],
                     $product['description'],
                     $product['cost_price'],

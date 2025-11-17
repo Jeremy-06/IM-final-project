@@ -279,7 +279,14 @@ require_once __DIR__ . '/../../helpers/Session.php';
                                 <td><?php echo ($index + 1); ?></td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <?php if (!empty($product['product_image'])): ?>
+                                        <?php if (!empty($product['product_deleted'])): ?>
+                                            <!-- PINK Placeholder for DELETED products -->
+                                            <div class="d-flex align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(232, 62, 140, 0.15) 0%, rgba(255, 159, 191, 0.2) 100%); border: 2px dashed #e83e8c; overflow: hidden;">
+                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(232, 62, 140, 0.15); border-radius: 50%; filter: blur(10px);"></div>
+                                                <div class="position-absolute" style="bottom: -30%; left: -20%; width: 25px; height: 25px; background: rgba(255, 159, 191, 0.15); border-radius: 50%; filter: blur(8px);"></div>
+                                                <i class="fas fa-image-slash" style="font-size: 1.2rem; color: #e83e8c;"></i>
+                                            </div>
+                                        <?php elseif (!empty($product['product_image'])): ?>
                                             <?php 
                                             // Handle both old paths (without products/) and new paths (with products/)
                                             $imagePath = $product['product_image'];
@@ -288,13 +295,11 @@ require_once __DIR__ . '/../../helpers/Session.php';
                                                 $imagePath = 'products/' . $imagePath;
                                             }
                                             ?>
-                                            <img src="uploads/<?php echo htmlspecialchars($imagePath); ?>" 
-                                                 alt="Product" 
-                                                 style="width: 50px; height: 50px; object-fit: contain; margin-right: 10px; border-radius: 8px;"
-                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                            <div class="d-none align-items-center justify-content-center rounded position-relative" style="width: 50px; height: 50px; margin-right: 10px; background: linear-gradient(135deg, rgba(139, 95, 191, 0.15) 0%, rgba(255, 159, 191, 0.2) 100%); border: 2px dashed var(--purple-medium); overflow: hidden;">
-                                                <div class="position-absolute" style="top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(139, 95, 191, 0.15); border-radius: 50%; filter: blur(10px);"></div>
-                                                <i class="fas fa-box-open" style="font-size: 1.2rem; color: var(--purple-medium);"></i>
+                                            <div class="product-image-wrapper" style="width: 50px; height: 50px; margin-right: 10px;">
+                                                <img src="uploads/<?php echo htmlspecialchars($imagePath); ?>" 
+                                                     alt="Product" 
+                                                     style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; display: block;"
+                                                     onerror="this.outerHTML='<div class=\'d-flex align-items-center justify-content-center rounded\' style=\'width: 50px; height: 50px; background: linear-gradient(135deg, rgba(139, 95, 191, 0.15) 0%, rgba(255, 159, 191, 0.2) 100%); border: 2px dashed var(--purple-medium); overflow: hidden; position: relative;\'><div style=\'position: absolute; top: -30%; right: -20%; width: 30px; height: 30px; background: rgba(139, 95, 191, 0.15); border-radius: 50%; filter: blur(10px);\'></div><i class=\'fas fa-box-open\' style=\'font-size: 1.2rem; color: var(--purple-medium);\'></i></div>'">
                                             </div>
                                         <?php else: ?>
                                             <!-- PURPLE Placeholder for products without images -->
@@ -306,7 +311,7 @@ require_once __DIR__ . '/../../helpers/Session.php';
                                         <div>
                                             <span><?php echo htmlspecialchars($product['product_name']); ?></span>
                                             <?php if (!empty($product['product_deleted']) || (isset($product['product_active']) && $product['product_active'] == 0)): ?>
-                                                <br><small style="color: #dc3545;">
+                                                <br><small style="color: #e83e8c;">
                                                     <i class="fas fa-exclamation-triangle me-1"></i>
                                                     <?php echo !empty($product['product_deleted']) ? 'Product Deleted' : 'Product Inactive'; ?>
                                                 </small>

@@ -31,11 +31,15 @@ class MailHelper {
             <meta name='viewport' content='width=device-width, initial-scale=1.0'>
             <style>
                 /* Simplified mobile styles for better email client compatibility */
+                body {
+                    font-family: Arial, sans-serif;
+                }
                 .container {
                     max-width: 600px;
                     margin: 0 auto;
                     background-color: white;
                     border: 1px solid #ddd;
+                    font-family: Arial, sans-serif;
                 }
 
                 .header {
@@ -164,7 +168,7 @@ class MailHelper {
                     font-weight: bold;
                     font-size: 14px;
                     color: #8b5fbf;
-                    text-align: center;
+                    text-align: left;
                     padding: 12px;
                 }
 

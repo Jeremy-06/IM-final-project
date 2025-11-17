@@ -288,22 +288,19 @@ class OrderController {
         
         // If no items found (all products deleted), try to get from order_history backup
         if (empty($orderItems)) {
-            $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
-            foreach ($historyOrders as $ho) {
-                if ($ho['order_id'] == $orderId) {
-                    // Parse items from JSON backup
-                    $parsedItems = json_decode($ho['items'], true) ?? [];
-                    $orderItems = [];
-                    foreach ($parsedItems as $item) {
-                        $item['item_total'] = $item['quantity'] * $item['unit_price'];
-                        // Add display fields for compatibility
-                        $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
-                        $item['display_image'] = $item['img_path'] ?? '';
-                        $item['is_deleted'] = 1; // Mark as deleted
-                        $item['use_placeholder'] = true; // Show unavailable
-                        $orderItems[] = $item;
-                    }
-                    break;
+            $historyOrder = $this->orderModel->getOrderFromHistory($orderId);
+            if ($historyOrder) {
+                // Parse items from JSON backup
+                $parsedItems = json_decode($historyOrder['items'], true) ?? [];
+                $orderItems = [];
+                foreach ($parsedItems as $item) {
+                    $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                    // Add display fields for compatibility
+                    $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
+                    $item['display_image'] = $item['img_path'] ?? '';
+                    $item['is_deleted'] = 1; // Mark as deleted
+                    $item['use_placeholder'] = true; // Show unavailable
+                    $orderItems[] = $item;
                 }
             }
         }

@@ -24,9 +24,9 @@ Session::remove('form_data');
                             <?php foreach ($categories as $category): ?>
                                 <div class="col-md-4 col-sm-6">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" 
-                                               id="category_<?php echo $category['id']; ?>" 
-                                               name="categories[]" 
+                                        <input class="form-check-input" type="checkbox"
+                                               id="category_<?php echo $category['id']; ?>"
+                                               name="categories[]"
                                                value="<?php echo $category['id']; ?>"
                                                <?php echo (isset($formData['categories']) && in_array($category['id'], (array)$formData['categories'])) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="category_<?php echo $category['id']; ?>">
@@ -37,6 +37,9 @@ Session::remove('form_data');
                             <?php endforeach; ?>
                         </div>
                         <small class="form-text text-muted">Select one or more categories for this product.</small>
+                        <?php if (Session::getFlash('categoriesError')): ?>
+                            <small class="text-danger"><?php echo Session::getFlash('categoriesError'); ?></small>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="form-group mb-3">
