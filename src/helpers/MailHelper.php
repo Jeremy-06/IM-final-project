@@ -16,9 +16,9 @@ class MailHelper {
         $result = self::sendEmail($toEmail, $toName, $subject, $body, 'gmail');
         
         // Also send copy to Mailtrap for testing
-        $testResult = self::sendEmail(Config::TEST_EMAIL, 'Test Recipient', $subject . ' (Test Copy)', $body, 'mailtrap');
+        // $testResult = self::sendEmail(Config::TEST_EMAIL, 'Test Recipient', $subject . ' (Test Copy)', $body, 'mailtrap');
         
-        $logMessage = date('Y-m-d H:i:s') . " - MailHelper: Real email result: " . ($result ? 'SUCCESS' : 'FAILED') . ", Test copy result: " . ($testResult ? 'SUCCESS' : 'FAILED') . "\n";
+        $logMessage = date('Y-m-d H:i:s') . " - MailHelper: Real email result: " . ($result ? 'SUCCESS' : 'FAILED') . "\n";
         file_put_contents($logFile, $logMessage, FILE_APPEND);
         
         return $result; // Return success based on real email

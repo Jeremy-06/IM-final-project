@@ -31,6 +31,9 @@ class UserController {
         $user = $this->userModel->findById($userId);
         $recentOrders = $this->orderModel->getCustomerOrders($userId);
         
+        // Check if user has pending or incomplete orders
+        $hasPendingOrders = $this->orderModel->hasPendingOrders($userId);
+        
         // If user is admin, get admin count for deletion protection info
         $adminCount = 0;
         if ($user['role'] === 'admin') {
@@ -132,6 +135,13 @@ class UserController {
                 header('Location: index.php?page=profile');
                 exit();
             }
+        }
+        
+        // Check if user has pending or incomplete orders
+        if ($this->orderModel->hasPendingOrders($userId)) {
+            Session::setFlash('message', 'Cannot delete your account. You have active orders (pending, processing, or shipped). Please complete or cancel all orders before deleting your account.');
+            header('Location: index.php?page=profile');
+            exit();
         }
         
         // Verify email confirmation matches

@@ -124,6 +124,7 @@ class Order extends BaseModel {
     public function getOrderDetails($orderId) {
         $sql = "SELECT o.*, 
                 u.email, 
+                u.is_active,
                 u.first_name, 
                 u.last_name, 
                 u.phone, 
@@ -133,7 +134,7 @@ class Order extends BaseModel {
                 u.country,
                 u.profile_picture
                 FROM orders o 
-                INNER JOIN users u ON o.customer_id = u.id 
+                LEFT JOIN users u ON o.customer_id = u.id 
                 WHERE o.id = ? LIMIT 1";
         $stmt = $this->db->prepare($sql);
         
@@ -207,9 +208,13 @@ class Order extends BaseModel {
     }
     
     public function getAllOrders() {
-        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count 
+        $sql = "SELECT o.*, 
+                COALESCE(u.email, oh.customer_email) as email, 
+                u.is_active, 
+                COUNT(oi.id) as item_count 
                 FROM orders o 
-                INNER JOIN users u ON o.customer_id = u.id 
+                LEFT JOIN users u ON o.customer_id = u.id 
+                LEFT JOIN order_history oh ON o.id = oh.order_id 
                 LEFT JOIN order_items oi ON o.id = oi.order_id 
                 GROUP BY o.id 
                 ORDER BY o.created_at DESC";
@@ -234,14 +239,18 @@ class Order extends BaseModel {
         
         $sortColumn = 'o.' . $sortBy;
         if ($sortBy === 'email') {
-            $sortColumn = 'u.email';
+            $sortColumn = 'COALESCE(u.email, oh.customer_email)';
         } else if ($sortBy === 'item_count') {
             $sortColumn = 'item_count';
         }
         
-        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count 
+        $sql = "SELECT o.*, 
+                COALESCE(u.email, oh.customer_email) as email, 
+                u.is_active, 
+                COUNT(oi.id) as item_count 
                 FROM orders o 
-                INNER JOIN users u ON o.customer_id = u.id 
+                LEFT JOIN users u ON o.customer_id = u.id 
+                LEFT JOIN order_history oh ON o.id = oh.order_id 
                 LEFT JOIN order_items oi ON o.id = oi.order_id 
                 GROUP BY o.id 
                 ORDER BY {$sortColumn} {$sortOrder}";
@@ -257,9 +266,13 @@ class Order extends BaseModel {
     }
     
     public function getOrdersByStatus($status) {
-        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+        $sql = "SELECT o.*, 
+                COALESCE(u.email, oh.customer_email) as email, 
+                u.is_active, 
+                COUNT(oi.id) as item_count
                 FROM orders o
-                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_history oh ON o.id = oh.order_id
                 LEFT JOIN order_items oi ON o.id = oi.order_id
                 WHERE o.order_status = ?
                 GROUP BY o.id
@@ -297,14 +310,18 @@ class Order extends BaseModel {
         
         $sortColumn = 'o.' . $sortBy;
         if ($sortBy === 'email') {
-            $sortColumn = 'u.email';
+            $sortColumn = 'COALESCE(u.email, oh.customer_email)';
         } else if ($sortBy === 'item_count') {
             $sortColumn = 'item_count';
         }
         
-        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+        $sql = "SELECT o.*, 
+                COALESCE(u.email, oh.customer_email) as email, 
+                u.is_active, 
+                COUNT(oi.id) as item_count
                 FROM orders o
-                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_history oh ON o.id = oh.order_id
                 LEFT JOIN order_items oi ON o.id = oi.order_id
                 WHERE o.order_status = ?
                 GROUP BY o.id
@@ -335,12 +352,16 @@ class Order extends BaseModel {
     public function searchOrders($search, $status = '') {
         $searchTerm = '%' . $search . '%';
         
-        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+        $sql = "SELECT o.*, 
+                COALESCE(u.email, oh.customer_email) as email, 
+                u.is_active, 
+                COUNT(oi.id) as item_count
                 FROM orders o
-                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_history oh ON o.id = oh.order_id
                 LEFT JOIN order_items oi ON o.id = oi.order_id
                 WHERE (o.order_number LIKE ? 
-                    OR u.email LIKE ? 
+                    OR COALESCE(u.email, oh.customer_email) LIKE ? 
                     OR CAST(o.total_amount AS CHAR) LIKE ?)";
         
         $params = [$searchTerm, $searchTerm, $searchTerm];
@@ -391,19 +412,23 @@ class Order extends BaseModel {
         
         $sortColumn = 'o.' . $sortBy;
         if ($sortBy === 'email') {
-            $sortColumn = 'u.email';
+            $sortColumn = 'COALESCE(u.email, oh.customer_email)';
         } else if ($sortBy === 'item_count') {
             $sortColumn = 'item_count';
         }
         
         $searchTerm = '%' . $search . '%';
         
-        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+        $sql = "SELECT o.*, 
+                COALESCE(u.email, oh.customer_email) as email, 
+                u.is_active, 
+                COUNT(oi.id) as item_count
                 FROM orders o
-                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_history oh ON o.id = oh.order_id
                 LEFT JOIN order_items oi ON o.id = oi.order_id
                 WHERE (o.order_number LIKE ? 
-                    OR u.email LIKE ? 
+                    OR COALESCE(u.email, oh.customer_email) LIKE ? 
                     OR CAST(o.total_amount AS CHAR) LIKE ?)";
         
         $params = [$searchTerm, $searchTerm, $searchTerm];
@@ -741,9 +766,13 @@ class Order extends BaseModel {
         return $products;
     }    
     public function getSalesOrdersList($startDate, $endDate) {
-        $sql = "SELECT o.*, u.email, COUNT(oi.id) as item_count
+        $sql = "SELECT o.*, 
+                COALESCE(u.email, oh.customer_email) as email, 
+                u.is_active, 
+                COUNT(oi.id) as item_count
                 FROM orders o
-                INNER JOIN users u ON o.customer_id = u.id
+                LEFT JOIN users u ON o.customer_id = u.id
+                LEFT JOIN order_history oh ON o.id = oh.order_id
                 LEFT JOIN order_items oi ON o.id = oi.order_id
                 WHERE o.order_status = 'completed'";
         
@@ -752,8 +781,7 @@ class Order extends BaseModel {
         
         if ($startDate && $endDate) {
             $sql .= " AND o.created_at >= ? AND o.created_at <= ?";
-            $params[] = $startDate;
-            $params[] = $endDate;
+            $params = [$startDate, $endDate];
             $types = 'ss';
         }
         
@@ -949,35 +977,28 @@ class Order extends BaseModel {
         return $order;
     }
     
-    public function getOrderItemById($orderItemId) {
-        $sql = "SELECT oi.*, o.customer_id, o.order_status, oi.has_reviewed
-                FROM order_items oi
-                INNER JOIN orders o ON oi.order_id = o.id
-                WHERE oi.id = ? LIMIT 1";
+    public function hasPendingOrders($customerId) {
+        $sql = "SELECT COUNT(*) as count FROM orders WHERE customer_id = ? AND order_status IN ('pending', 'processing', 'shipped')";
         $stmt = $this->db->prepare($sql);
         
         if ($stmt === false) {
-            ErrorHandler::log("getOrderItemById prepare failed: " . $this->db->getError(), 'ERROR');
-            return null;
+            ErrorHandler::log("hasPendingOrders prepare failed: " . $this->db->getError(), 'ERROR');
+            return false;
         }
-        
-        mysqli_stmt_bind_param($stmt, 'i', $orderItemId);
-        
+        mysqli_stmt_bind_param($stmt, 'i', $customerId);
         if (!mysqli_stmt_execute($stmt)) {
-            ErrorHandler::log("getOrderItemById execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            ErrorHandler::log("hasPendingOrders execute failed: " . mysqli_stmt_error($stmt), 'ERROR');
             mysqli_stmt_close($stmt);
-            return null;
+            return false;
         }
-        
         $result = mysqli_stmt_get_result($stmt);
         if ($result === false) {
-            ErrorHandler::log("getOrderItemById get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
+            ErrorHandler::log("hasPendingOrders get_result failed: " . mysqli_stmt_error($stmt), 'ERROR');
             mysqli_stmt_close($stmt);
-            return null;
+            return false;
         }
-        
-        $orderItem = mysqli_fetch_assoc($result);
+        $row = mysqli_fetch_assoc($result);
         mysqli_stmt_close($stmt);
-        return $orderItem;
+        return ($row['count'] ?? 0) > 0;
     }
 }

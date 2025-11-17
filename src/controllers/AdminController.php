@@ -385,6 +385,19 @@ class AdminController {
             $orders = $this->orderModel->getAllOrdersSorted($sortBy, $sortOrder);
         }
         
+        // Add indicator for deleted users
+        foreach ($orders as &$order) {
+            if (empty($order['email'])) {
+                $order['email'] = 'No email';
+            } elseif (isset($order['is_active']) && $order['is_active'] == 0) {
+                $order['email'] .= ' (Deleted)';
+            } elseif (!isset($order['is_active']) || $order['is_active'] === null) {
+                // Hard-deleted user (user record removed)
+                $order['email'] .= ' (Deleted)';
+            }
+        }
+        unset($order); // Important: unset reference to avoid bugs
+        
         // Get all orders for badge counts
         $allOrders = $this->orderModel->getAllOrders();
         
@@ -400,6 +413,30 @@ class AdminController {
         
         // Try to get from regular orders table first
         $order = $this->orderModel->getOrderDetails($orderId);
+        
+        // If user is deleted, set default values
+        if ($order) {
+            $order['first_name'] = $order['first_name'] ?? 'Deleted';
+            $order['last_name'] = $order['last_name'] ?? 'User';
+            $order['phone'] = $order['phone'] ?? 'N/A';
+            $order['address'] = $order['address'] ?? 'N/A';
+            $order['city'] = $order['city'] ?? 'N/A';
+            $order['postal_code'] = $order['postal_code'] ?? 'N/A';
+            $order['country'] = $order['country'] ?? 'N/A';
+            $order['profile_picture'] = $order['profile_picture'] ?? '';
+        }
+        
+        // Add indicator for deleted users
+        if ($order) {
+            if (empty($order['email'])) {
+                $order['email'] = 'No email';
+            } elseif (isset($order['is_active']) && $order['is_active'] == 0) {
+                $order['email'] .= ' (Deleted)';
+            } elseif (!isset($order['is_active']) || $order['is_active'] === null) {
+                // Hard-deleted user (user record removed)
+                $order['email'] .= ' (Deleted)';
+            }
+        }
         
         // If not found, try to get from order_history (archived orders)
         if (!$order) {
@@ -453,29 +490,27 @@ class AdminController {
             exit();
         }
         
-        // Get order items if not already set
-        if (!isset($orderItems)) {
-            $orderItems = $this->orderModel->getOrderItems($orderId);
-            
-            // If no items found (all products deleted), try to get from order_history backup
-            if (empty($orderItems)) {
-                $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
-                foreach ($historyOrders as $ho) {
-                    if ($ho['order_id'] == $orderId) {
-                        // Parse items from JSON backup
-                        $parsedItems = json_decode($ho['items'], true) ?? [];
-                        $orderItems = [];
-                        foreach ($parsedItems as $item) {
-                            $item['item_total'] = $item['quantity'] * $item['unit_price'];
-                            // Add display fields for compatibility
-                            $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
-                            $item['display_image'] = $item['img_path'] ?? '';
-                            $item['is_deleted'] = 1; // Mark as deleted since we got from history
-                            $item['use_placeholder'] = true; // Show unavailable
-                            $orderItems[] = $item;
-                        }
-                        break;
+        // Get order items
+        $orderItems = $this->orderModel->getOrderItems($orderId);
+        
+        // If no items found (all products deleted), try to get from order_history backup
+        if (empty($orderItems)) {
+            $historyOrders = $this->orderModel->getCompletedOrdersFromHistory(1000);
+            foreach ($historyOrders as $ho) {
+                if ($ho['order_id'] == $orderId) {
+                    // Parse items from JSON backup
+                    $parsedItems = json_decode($ho['items'], true) ?? [];
+                    $orderItems = [];
+                    foreach ($parsedItems as $item) {
+                        $item['item_total'] = $item['quantity'] * $item['unit_price'];
+                        // Add display fields for compatibility
+                        $item['display_name'] = $item['product_name'] ?? 'Unknown Product';
+                        $item['display_image'] = $item['img_path'] ?? '';
+                        $item['is_deleted'] = 1; // Mark as deleted since we got from history
+                        $item['use_placeholder'] = true; // Show unavailable
+                        $orderItems[] = $item;
                     }
+                    break;
                 }
             }
         }
@@ -522,6 +557,30 @@ class AdminController {
         
         // Try to get from regular orders table first
         $order = $this->orderModel->getOrderDetails($orderId);
+        
+        // If user is deleted, set default values
+        if ($order) {
+            $order['first_name'] = $order['first_name'] ?? 'Deleted';
+            $order['last_name'] = $order['last_name'] ?? 'User';
+            $order['phone'] = $order['phone'] ?? 'N/A';
+            $order['address'] = $order['address'] ?? 'N/A';
+            $order['city'] = $order['city'] ?? 'N/A';
+            $order['postal_code'] = $order['postal_code'] ?? 'N/A';
+            $order['country'] = $order['country'] ?? 'N/A';
+            $order['profile_picture'] = $order['profile_picture'] ?? '';
+        }
+        
+        // Add indicator for deleted users
+        if ($order) {
+            if (empty($order['email'])) {
+                $order['email'] = 'No email';
+            } elseif (isset($order['is_active']) && $order['is_active'] == 0) {
+                $order['email'] .= ' (Deleted)';
+            } elseif (!isset($order['is_active']) || $order['is_active'] === null) {
+                // Hard-deleted user (user record removed)
+                $order['email'] .= ' (Deleted)';
+            }
+        }
         
         // If not found, try to get from order_history (archived orders)
         if (!$order) {
@@ -708,15 +767,13 @@ class AdminController {
             }
         }
         
-        // Check if user has pending orders
-        $pendingOrders = $this->orderModel->getOrdersByCustomerAndStatus($id, ['pending', 'processing', 'shipped', 'delivered']);
-        if (!empty($pendingOrders)) {
-            Session::setFlash('message', 'Cannot delete user with active orders. Wait until all orders are completed or cancel them first.');
-            header('Location: admin.php?page=users');
-            exit();
-        }
-        
-        if ($this->userModel->delete($id)) {
+    // Check if user has pending orders
+    $pendingOrders = $this->orderModel->getOrdersByCustomerAndStatus($id, ['pending', 'processing', 'shipped']);
+    if (!empty($pendingOrders)) {
+        Session::setFlash('message', 'Cannot delete user with active orders. Wait until all orders are completed or cancel them first.');
+        header('Location: admin.php?page=users');
+        exit();
+    }        if ($this->userModel->updateStatus($id, 0)) {
             // Force logout the deleted user by destroying their session
             $this->destroyUserSessions($id);
             
@@ -993,6 +1050,19 @@ class AdminController {
         
         // Get orders list for the period
         $orders = $this->orderModel->getSalesOrdersList($startDate, $endDate);
+        
+        // Add indicator for deleted users
+        foreach ($orders as &$order) {
+            if (empty($order['email'])) {
+                $order['email'] = 'No email';
+            } elseif (isset($order['is_active']) && $order['is_active'] == 0) {
+                $order['email'] .= ' (Deleted)';
+            } elseif (!isset($order['is_active']) || $order['is_active'] === null) {
+                // Hard-deleted user (user record removed)
+                $order['email'] .= ' (Deleted)';
+            }
+        }
+        unset($order); // Important: unset reference to avoid bugs
         
         // Get expenses for the period
         if ($startDate && $endDate) {

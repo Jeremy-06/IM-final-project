@@ -63,6 +63,23 @@ require_once __DIR__ . '/../helpers/CSRF.php';
             </div>
         </div>
         <?php endif; ?>
+        
+        <?php if ($hasPendingOrders): ?>
+        <!-- Pending Orders Notice -->
+        <div class="alert alert-warning alert-dismissible fade show no-autohide d-flex align-items-start" style="border-radius: 15px; border: none; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 235, 59, 0.1) 100%); border-left: 4px solid #ffc107;" role="alert">
+            <i class="fas fa-shopping-cart me-3" style="font-size: 1.5rem; color: #ffc107; margin-top: 2px;"></i>
+            <div class="flex-grow-1">
+                <h6 class="mb-1" style="color: #856404; font-weight: 600;">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Account Deletion Restricted
+                </h6>
+                <p class="mb-0" style="font-size: 0.9rem; color: #856404;">
+                    You have active orders (pending, processing, or shipped). Your account cannot be deleted until all orders are completed or cancelled. 
+                    Please resolve your outstanding orders first to enable account deletion.
+                </p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="margin-left: 10px;"></button>
+        </div>
+        <?php endif; ?>
     </div>
     
     <!-- Profile Information Form -->
@@ -265,6 +282,12 @@ require_once __DIR__ . '/../helpers/CSRF.php';
                     <div class="alert alert-warning mb-3" style="border-radius: 10px;">
                         <i class="fas fa-shield-alt me-2"></i>
                         <strong>Account Deletion Disabled:</strong> You are the only administrator in the system. Your account cannot be deleted to ensure continuous system management. At least one admin must remain to maintain the system.
+                    </div>
+                    <?php elseif ($hasPendingOrders): ?>
+                    <!-- Has Pending Orders - Cannot Delete -->
+                    <div class="alert alert-warning mb-3" style="border-radius: 10px;">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        <strong>Account Deletion Disabled:</strong> You have active orders (pending, processing, or shipped). Your account cannot be deleted until all orders are completed or cancelled. Please resolve your outstanding orders first.
                     </div>
                     <?php else: ?>
                     <!-- Regular User or Non-Last Admin - Can Delete -->
