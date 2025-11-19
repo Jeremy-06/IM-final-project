@@ -52,6 +52,10 @@ function render_stars_home($rating, $reviewCount) {
     <div class="col-md-12">
         <div class="hero-section shadow-sm position-relative overflow-hidden" style="background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-medium) 50%, var(--pink-medium) 100%); border-radius: 25px; padding: 5rem 3rem; text-align: center;">
             <div class="position-relative">
+                <!-- Logo -->
+                <div class="mb-4">
+                    <img src="uploads/logo/Lotus Plushies Logo.png" alt="Lotus Plushies Logo" style="max-width: 150px; height: auto; border-radius: 50%; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);">
+                </div>
                 <h1 class="display-2 fw-bold text-white mb-3">Welcome to Lotus Plushies</h1>
                 <p class="lead text-white mb-4" style="font-size: 1.4rem;">Discover adorable plushies that bring joy and comfort</p>
                 <a href="index.php?page=products" class="btn btn-light btn-lg shadow-sm" style="border-radius: 30px; padding: 1rem 3rem; font-weight: 700;"><i class="fas fa-shopping-bag me-2"></i>Shop Now</a>

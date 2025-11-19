@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 17, 2025 at 05:34 AM
+-- Generation Time: Nov 19, 2025 at 04:11 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -118,7 +118,9 @@ INSERT INTO `expenses` (`id`, `expense_date`, `category`, `description`, `amount
 (38, '2025-11-16', 'Inventory', 'Initial stock for product: Lambutan (25 units @ ₱800 each)', 20000.00, 'cash', NULL, 'Snuggle Teddy PH', 'Auto-generated expense for initial product stock', 17, 14, '2025-11-16 14:35:13', '2025-11-16 14:35:13'),
 (39, '2025-11-16', 'Inventory', 'Initial stock for product: Panda (30 units @ ₱500 each)', 15000.00, 'cash', NULL, 'Snuggle Teddy PH', 'Auto-generated expense for initial product stock', 17, 14, '2025-11-16 14:47:14', '2025-11-16 14:47:14'),
 (40, '2025-11-16', 'Inventory', 'Initial stock for product: Panda (30 units @ ₱500 each)', 15000.00, 'cash', NULL, 'Snuggle Teddy PH', 'Auto-generated expense for initial product stock', 17, 14, '2025-11-16 14:47:15', '2025-11-16 14:47:15'),
-(41, '2025-11-16', 'Inventory', 'Initial stock for product: Sealing (40 units @ ₱700 each)', 28000.00, 'cash', NULL, 'Snuggle Teddy PH', 'Auto-generated expense for initial product stock', 17, 14, '2025-11-16 14:49:10', '2025-11-16 14:49:10');
+(41, '2025-11-16', 'Inventory', 'Initial stock for product: Sealing (40 units @ ₱700 each)', 28000.00, 'cash', NULL, 'Snuggle Teddy PH', 'Auto-generated expense for initial product stock', 17, 14, '2025-11-16 14:49:10', '2025-11-16 14:49:10'),
+(42, '2025-11-17', 'Inventory', 'Initial stock for product: New Product (20 units @ ₱50 each)', 1000.00, 'cash', NULL, 'GTG Stuffed Toys', 'Auto-generated expense for initial product stock', 15, 1, '2025-11-17 07:22:12', '2025-11-17 07:22:12'),
+(43, '2025-11-17', 'Inventory', 'Initial stock for product: a (1 units @ ₱1 each)', 1.00, 'cash', NULL, 'GTG Stuffed Toys', 'Auto-generated expense for initial product stock', 15, 1, '2025-11-17 08:27:53', '2025-11-17 08:27:53');
 
 -- --------------------------------------------------------
 
@@ -142,17 +144,17 @@ INSERT INTO `inventory` (`id`, `product_id`, `quantity_on_hand`, `reorder_level`
 (46, 66, 16, 10, '2025-11-16 18:23:05'),
 (47, 67, 28, 10, '2025-11-16 16:41:08'),
 (48, 68, 10, 10, '2025-11-16 14:04:49'),
-(49, 69, 18, 10, '2025-11-16 14:06:22'),
+(49, 69, 17, 10, '2025-11-17 11:04:49'),
 (50, 70, 44, 10, '2025-11-16 16:49:23'),
-(51, 71, 20, 10, '2025-11-16 14:18:19'),
+(51, 71, 19, 10, '2025-11-17 12:01:23'),
 (52, 72, 18, 10, '2025-11-16 18:05:32'),
-(53, 73, 11, 10, '2025-11-16 17:16:51'),
+(53, 73, 11, 10, '2025-11-17 11:09:35'),
 (54, 74, 10, 10, '2025-11-16 16:23:49'),
-(55, 75, 10, 10, '2025-11-16 14:28:14'),
-(56, 76, 50, 10, '2025-11-16 14:30:39'),
+(55, 75, 10, 10, '2025-11-17 12:01:06'),
+(56, 76, 49, 10, '2025-11-17 10:38:56'),
 (57, 77, 25, 10, '2025-11-16 14:32:18'),
-(58, 78, 22, 10, '2025-11-16 18:49:08'),
-(59, 79, 30, 10, '2025-11-16 14:47:14');
+(58, 78, 20, 10, '2025-11-17 10:02:32'),
+(59, 79, 29, 10, '2025-11-17 10:31:59');
 
 -- --------------------------------------------------------
 
@@ -199,26 +201,36 @@ INSERT INTO `orders` (`id`, `customer_id`, `order_number`, `order_status`, `subt
 (37, 11, 'ORD-1762883823-11', 'completed', 2799.00, 50.00, 0.00, 2849.00, '2025-11-11 17:57:03', '2025-11-16 18:21:40'),
 (38, 11, 'ORD-1763302383-11', 'completed', 4500.00, 50.00, 0.00, 4550.00, '2025-11-16 14:13:03', '2025-11-16 18:21:40'),
 (39, 11, 'ORD-1763302485-11', 'completed', 1900.00, 50.00, 0.00, 1950.00, '2025-11-16 14:14:45', '2025-11-16 18:21:40'),
-(40, 15, 'ORD-1763309965-15', 'completed', 5000.00, 50.00, 0.00, 5050.00, '2025-11-16 16:19:25', '2025-11-16 18:21:40'),
-(41, 15, 'ORD-1763310229-15', 'completed', 8000.00, 50.00, 0.00, 8050.00, '2025-11-16 16:23:49', '2025-11-16 18:21:40'),
-(42, 15, 'ORD-1763310948-15', 'completed', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 16:35:48', '2025-11-16 18:21:40'),
-(43, 15, 'ORD-1763311268-15', 'completed', 1800.00, 50.00, 0.00, 1850.00, '2025-11-16 16:41:08', '2025-11-16 18:21:40'),
-(44, 15, 'ORD-1763311763-15', 'completed', 1000.00, 50.00, 0.00, 1050.00, '2025-11-16 16:49:23', '2025-11-16 18:21:40'),
-(45, 15, 'ORD-1763312572-15', 'cancelled', 5000.00, 50.00, 0.00, 5050.00, '2025-11-16 17:02:52', '2025-11-16 18:21:40'),
-(46, 15, 'ORD-1763312730-15', 'cancelled', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:05:30', '2025-11-16 18:21:40'),
-(47, 15, 'ORD-1763312911-15', 'cancelled', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:08:31', '2025-11-16 18:21:40'),
-(48, 15, 'ORD-1763313060-15', 'completed', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:11:00', '2025-11-16 18:21:40'),
-(49, 15, 'ORD-1763313411-15', 'pending', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:16:51', '2025-11-16 18:21:40'),
-(50, 15, 'ORD-1763314816-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:40:16', '2025-11-16 18:21:40'),
-(51, 15, 'ORD-1763315182-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:46:22', '2025-11-16 18:21:40'),
-(52, 15, 'ORD-1763315424-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:50:24', '2025-11-16 18:21:40'),
-(53, 15, 'ORD-1763315584-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:53:04', '2025-11-16 18:21:40'),
-(54, 15, 'ORD-1763315908-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:58:28', '2025-11-16 18:21:40'),
-(55, 15, 'ORD-1763316332-15', 'processing', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 18:05:32', '2025-11-16 18:29:00'),
-(56, 15, 'ORD-1763317385-15', 'completed', 1900.00, 50.00, 0.00, 1950.00, '2025-11-16 18:23:05', '2025-11-16 18:24:45'),
-(57, 15, 'ORD-1763318177-15', 'completed', 2000.00, 50.00, 0.00, 2050.00, '2025-11-16 18:36:17', '2025-11-16 18:39:11'),
-(58, 15, 'ORD-1763318820-15', 'cancelled', 1000.00, 50.00, 0.00, 1050.00, '2025-11-16 18:47:00', '2025-11-16 18:47:59'),
-(59, 15, 'ORD-1763318948-15', 'pending', 1000.00, 50.00, 0.00, 1050.00, '2025-11-16 18:49:08', '2025-11-16 18:49:08');
+(40, NULL, 'ORD-1763309965-15', 'completed', 5000.00, 50.00, 0.00, 5050.00, '2025-11-16 16:19:25', '2025-11-16 18:21:40'),
+(41, NULL, 'ORD-1763310229-15', 'completed', 8000.00, 50.00, 0.00, 8050.00, '2025-11-16 16:23:49', '2025-11-16 18:21:40'),
+(42, NULL, 'ORD-1763310948-15', 'completed', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 16:35:48', '2025-11-16 18:21:40'),
+(43, NULL, 'ORD-1763311268-15', 'completed', 1800.00, 50.00, 0.00, 1850.00, '2025-11-16 16:41:08', '2025-11-16 18:21:40'),
+(44, NULL, 'ORD-1763311763-15', 'completed', 1000.00, 50.00, 0.00, 1050.00, '2025-11-16 16:49:23', '2025-11-16 18:21:40'),
+(45, NULL, 'ORD-1763312572-15', 'cancelled', 5000.00, 50.00, 0.00, 5050.00, '2025-11-16 17:02:52', '2025-11-16 18:21:40'),
+(46, NULL, 'ORD-1763312730-15', 'cancelled', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:05:30', '2025-11-16 18:21:40'),
+(47, NULL, 'ORD-1763312911-15', 'cancelled', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:08:31', '2025-11-16 18:21:40'),
+(48, NULL, 'ORD-1763313060-15', 'completed', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:11:00', '2025-11-16 18:21:40'),
+(49, NULL, 'ORD-1763313411-15', 'completed', 2500.00, 50.00, 0.00, 2550.00, '2025-11-16 17:16:51', '2025-11-17 09:47:04'),
+(50, NULL, 'ORD-1763314816-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:40:16', '2025-11-16 18:21:40'),
+(51, NULL, 'ORD-1763315182-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:46:22', '2025-11-16 18:21:40'),
+(52, NULL, 'ORD-1763315424-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:50:24', '2025-11-16 18:21:40'),
+(53, NULL, 'ORD-1763315584-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:53:04', '2025-11-16 18:21:40'),
+(54, NULL, 'ORD-1763315908-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 17:58:28', '2025-11-16 18:21:40'),
+(55, NULL, 'ORD-1763316332-15', 'cancelled', 1500.00, 50.00, 0.00, 1550.00, '2025-11-16 18:05:32', '2025-11-17 09:47:18'),
+(56, NULL, 'ORD-1763317385-15', 'completed', 1900.00, 50.00, 0.00, 1950.00, '2025-11-16 18:23:05', '2025-11-16 18:24:45'),
+(57, NULL, 'ORD-1763318177-15', 'completed', 2000.00, 50.00, 0.00, 2050.00, '2025-11-16 18:36:17', '2025-11-16 18:39:11'),
+(58, NULL, 'ORD-1763318820-15', 'cancelled', 1000.00, 50.00, 0.00, 1050.00, '2025-11-16 18:47:00', '2025-11-16 18:47:59'),
+(59, NULL, 'ORD-1763318948-15', 'completed', 1000.00, 50.00, 0.00, 1050.00, '2025-11-16 18:49:08', '2025-11-17 09:47:11'),
+(60, NULL, 'ORD-1763364218-15', 'completed', 300.00, 50.00, 0.00, 350.00, '2025-11-17 07:23:38', '2025-11-17 07:26:19'),
+(61, NULL, 'ORD-1763370286-15', 'completed', 1000.00, 50.00, 0.00, 1050.00, '2025-11-17 09:04:46', '2025-11-17 09:46:58'),
+(62, NULL, 'ORD-1763373752-16', 'cancelled', 1800.00, 50.00, 0.00, 1850.00, '2025-11-17 10:02:32', '2025-11-17 11:06:03'),
+(63, 18, 'ORD-1763374560-18', 'cancelled', 800.00, 50.00, 0.00, 850.00, '2025-11-17 10:16:00', '2025-11-17 10:31:59'),
+(64, 18, 'ORD-1763375936-18', 'completed', 600.00, 50.00, 0.00, 650.00, '2025-11-17 10:38:56', '2025-11-17 10:44:06'),
+(65, 18, 'ORD-1763377386-18', 'cancelled', 5000.00, 50.00, 0.00, 5050.00, '2025-11-17 11:03:06', '2025-11-17 11:04:21'),
+(66, 18, 'ORD-1763377489-18', 'completed', 950.00, 50.00, 0.00, 1000.00, '2025-11-17 11:04:49', '2025-11-17 11:06:08'),
+(67, 18, 'ORD-1763377666-18', 'cancelled', 2500.00, 50.00, 0.00, 2550.00, '2025-11-17 11:07:46', '2025-11-17 11:09:35'),
+(68, 18, 'ORD-1763380258-18', 'cancelled', 5000.00, 50.00, 0.00, 5050.00, '2025-11-17 11:50:58', '2025-11-17 12:01:06'),
+(69, 18, 'ORD-1763380883-18', 'completed', 1500.00, 50.00, 0.00, 1550.00, '2025-11-17 12:01:23', '2025-11-17 12:02:18');
 
 -- --------------------------------------------------------
 
@@ -243,19 +255,10 @@ CREATE TABLE `order_history` (
 INSERT INTO `order_history` (`id`, `order_id`, `customer_name`, `customer_email`, `total_amount`, `items`, `created_at`) VALUES
 (6, 19, 'RON JEREMY PRIMAVERA', 'primaveraron@gmail.com', 5000.00, '[{\"product_name\":\"Product 1\",\"quantity\":5,\"unit_price\":\"1000.00\"}]', '2025-11-02 09:35:56'),
 (7, 20, 'RON JEREMY PRIMAVERA', 'primaveraron@gmail.com', 10000.00, '[{\"product_name\":\"Product 2\",\"quantity\":10,\"unit_price\":\"1000.00\"}]', '2025-11-02 10:02:18'),
-(8, 21, 'RON JEREMY PRIMAVERA', 'primaveraron@gmail.com', 8990.00, '[{\"product_name\":\"Keychain Pals Set\",\"quantity\":10,\"unit_price\":\"899.00\"}]', '2025-11-02 15:01:30'),
 (9, 22, 'RON JEREMY PRIMAVERA', 'primaveraron@gmail.com', 21980.00, '[{\"product_name\":\"Lotus Flower Plush\",\"quantity\":20,\"unit_price\":\"1099.00\"}]', '2025-11-02 15:04:10'),
 (10, 25, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 7495.00, '[{\"product_name\":\"Ocean Dolphin\",\"quantity\":5,\"unit_price\":\"1499.00\"}]', '2025-11-02 15:19:03'),
 (11, 26, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 16240.00, '[{\"product_name\":\"Lion King\",\"quantity\":5,\"unit_price\":\"1899.00\"},{\"product_name\":\"Owl Wisdom\",\"quantity\":5,\"unit_price\":\"1349.00\"}]', '2025-11-02 15:24:07'),
-(12, 27, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 14584.00, '[{\"product_name\":\"Lotus Flower Plush\",\"quantity\":1,\"unit_price\":\"1099.00\"},{\"product_name\":\"Keychain Pals Set\",\"quantity\":15,\"unit_price\":\"899.00\"}]', '2025-11-02 15:27:11'),
 (13, 28, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 13240.00, '[{\"product_name\":\"Ocean Dolphin\",\"quantity\":5,\"unit_price\":\"1499.00\"},{\"product_name\":\"Turtle Buddy\",\"quantity\":5,\"unit_price\":\"1149.00\"}]', '2025-11-02 15:46:46'),
-(14, 29, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 14490.00, '[{\"product_name\":\"Holiday Santa\",\"quantity\":5,\"unit_price\":\"1299.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-02 16:07:52'),
-(15, 30, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 20990.00, '[{\"product_name\":\"Dragon Collectible\",\"quantity\":5,\"unit_price\":\"2599.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-02 16:55:12'),
-(16, 31, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 29485.00, '[{\"product_name\":\"Unicorn Dreams\",\"quantity\":5,\"unit_price\":\"1699.00\"},{\"product_name\":\"Dragon Collectible\",\"quantity\":5,\"unit_price\":\"2599.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-04 00:30:34'),
-(17, 33, 'RON JEREMY PRIMAVERA', 'primaveraron@gmail.com', 12490.00, '[{\"product_name\":\"Bunny Hop\",\"quantity\":10,\"unit_price\":\"1249.00\"}]', '2025-11-06 02:19:20'),
-(18, 32, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 29485.00, '[{\"product_name\":\"Unicorn Dreams\",\"quantity\":5,\"unit_price\":\"1699.00\"},{\"product_name\":\"Dragon Collectible\",\"quantity\":5,\"unit_price\":\"2599.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-04 06:36:26'),
-(19, 36, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 2799.00, '[{\"product_name\":\"Phoenix Rising\",\"quantity\":1,\"unit_price\":\"2799.00\"}]', '2025-11-11 17:38:24'),
-(20, 37, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 2799.00, '[{\"product_name\":\"Phoenix Rising\",\"quantity\":1,\"unit_price\":\"2799.00\"}]', '2025-11-11 17:57:19'),
 (21, 38, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 4500.00, '[{\"product_name\":\"Axolotl\",\"quantity\":5,\"unit_price\":\"900.00\"}]', '2025-11-16 14:13:21'),
 (22, 39, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 1900.00, '[{\"product_name\":\"Aurora Bear\",\"quantity\":2,\"unit_price\":\"950.00\"}]', '2025-11-16 14:15:04'),
 (23, 40, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 5000.00, '[{\"product_name\":\"Derpy\",\"quantity\":2,\"unit_price\":\"2500.00\"}]', '2025-11-16 16:21:13'),
@@ -265,7 +268,25 @@ INSERT INTO `order_history` (`id`, `order_id`, `customer_name`, `customer_email`
 (27, 44, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 1000.00, '[{\"product_name\":\"Capybara Family\",\"quantity\":1,\"unit_price\":\"1000.00\"}]', '2025-11-16 16:50:04'),
 (28, 48, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 2500.00, '[{\"product_name\":\"Derpy\",\"quantity\":1,\"unit_price\":\"2500.00\"}]', '2025-11-16 17:40:04'),
 (29, 56, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 1950.00, '[{\"product_name\":\"Aurora Bear\",\"quantity\":2,\"unit_price\":\"950.00\"}]', '2025-11-16 18:24:45'),
-(30, 57, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 2050.00, '[{\"product_name\":\"Lambutan\",\"quantity\":2,\"unit_price\":\"1000.00\"}]', '2025-11-16 18:39:11');
+(30, 57, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 2050.00, '[{\"product_name\":\"Lambutan\",\"quantity\":2,\"unit_price\":\"1000.00\"}]', '2025-11-16 18:39:11'),
+(31, 60, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 350.00, '[{\"product_name\":\"New Product\",\"quantity\":5,\"unit_price\":\"60.00\"}]', '2025-11-17 07:26:19'),
+(35, 21, '', '', 9040.00, '[{\"product_name\":\"Keychain Pals Set\",\"quantity\":10,\"unit_price\":\"899.00\"},{\"product_name\":\"Keychain Pals Set\",\"quantity\":1,\"unit_price\":\"10.00\"}]', '2025-11-17 09:59:15'),
+(36, 27, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 14634.00, '[{\"product_name\":\"Keychain Pals Set\",\"quantity\":15,\"unit_price\":\"899.00\"}]', '2025-11-17 09:59:15'),
+(37, 29, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 14540.00, '[{\"product_name\":\"Holiday Santa\",\"quantity\":5,\"unit_price\":\"1299.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-17 09:59:15'),
+(38, 30, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 21040.00, '[{\"product_name\":\"Dragon Collectible\",\"quantity\":5,\"unit_price\":\"2599.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-17 09:59:15'),
+(39, 31, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 29535.00, '[{\"product_name\":\"Unicorn Dreams\",\"quantity\":5,\"unit_price\":\"1699.00\"},{\"product_name\":\"Dragon Collectible\",\"quantity\":5,\"unit_price\":\"2599.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-17 09:59:15'),
+(40, 32, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 29535.00, '[{\"product_name\":\"Unicorn Dreams\",\"quantity\":5,\"unit_price\":\"1699.00\"},{\"product_name\":\"Dragon Collectible\",\"quantity\":5,\"unit_price\":\"2599.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-17 09:59:15'),
+(41, 33, '', '', 12540.00, '[{\"product_name\":\"Bunny Hop\",\"quantity\":10,\"unit_price\":\"1249.00\"}]', '2025-11-17 09:59:15'),
+(42, 34, 'Julrimi Tumavera', 'lilithzie@gmail.com', 15242.00, '[{\"product_name\":\"Baby Elephant\",\"quantity\":8,\"unit_price\":\"1899.00\"}]', '2025-11-17 09:59:15'),
+(43, 35, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 21040.00, '[{\"product_name\":\"Dragon Collectible\",\"quantity\":5,\"unit_price\":\"2599.00\"},{\"product_name\":\"Panda Cuddles\",\"quantity\":5,\"unit_price\":\"1599.00\"}]', '2025-11-17 09:59:15'),
+(44, 36, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 2849.00, '[{\"product_name\":\"Phoenix Rising\",\"quantity\":1,\"unit_price\":\"2799.00\"}]', '2025-11-17 09:59:15'),
+(45, 37, 'Julianne Tumpap', 'juliannetumpap08@gmail.com', 2849.00, '[{\"product_name\":\"Phoenix Rising\",\"quantity\":1,\"unit_price\":\"2799.00\"}]', '2025-11-17 09:59:15'),
+(46, 49, '', '', 2550.00, '[{\"product_name\":\"Derpy\",\"quantity\":1,\"unit_price\":\"2500.00\"}]', '2025-11-17 09:59:15'),
+(47, 59, '', '', 1050.00, '[{\"product_name\":\"Lambutan\",\"quantity\":1,\"unit_price\":\"1000.00\"}]', '2025-11-17 09:59:15'),
+(48, 61, '', '', 1050.00, '[{\"product_name\":\"Lambutan\",\"quantity\":1,\"unit_price\":\"1000.00\"}]', '2025-11-17 09:59:15'),
+(49, 64, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 650.00, '[{\"product_name\":\"Froggit\",\"quantity\":1,\"unit_price\":\"600.00\"}]', '2025-11-17 10:44:06'),
+(50, 66, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 1000.00, '[{\"product_name\":\"Bun Bun\",\"quantity\":1,\"unit_price\":\"950.00\"}]', '2025-11-17 11:06:09'),
+(51, 69, 'Ron Jeremy Primavera', 'primaveraron@gmail.com', 1550.00, '[{\"product_name\":\"Sakura Cat\",\"quantity\":1,\"unit_price\":\"1500.00\"}]', '2025-11-17 12:02:18');
 
 -- --------------------------------------------------------
 
@@ -331,7 +352,18 @@ INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `product_name`, `prod
 (68, 56, 66, 'Aurora Bear', 'products/product_66_17633015445838_9454.jpg', 2, 950.00, 1900.00, '2025-11-16 18:23:05', 0),
 (69, 57, 78, 'Lambutan', 'products/product_78_17633037135542_1953.jpg', 2, 1000.00, 2000.00, '2025-11-16 18:36:17', 0),
 (70, 58, 78, 'Lambutan', 'products/product_78_17633037135542_1953.jpg', 1, 1000.00, 1000.00, '2025-11-16 18:47:00', 0),
-(71, 59, 78, 'Lambutan', 'products/product_78_17633037135542_1953.jpg', 1, 1000.00, 1000.00, '2025-11-16 18:49:08', 0);
+(71, 59, 78, 'Lambutan', 'products/product_78_17633037135542_1953.jpg', 1, 1000.00, 1000.00, '2025-11-16 18:49:08', 0),
+(72, 60, NULL, 'New Product', 'products/product_95_17633641327523_5225.png', 5, 60.00, 300.00, '2025-11-17 07:23:38', 0),
+(73, 61, 78, 'Lambutan', 'products/product_78_17633037135542_1953.jpg', 1, 1000.00, 1000.00, '2025-11-17 09:04:46', 0),
+(74, 62, 78, 'Lambutan', 'products/product_78_17633037135542_1953.jpg', 1, 1000.00, 1000.00, '2025-11-17 10:02:32', 0),
+(75, 62, 79, 'Panda Coco', 'products/product_79_17633044345829_5036.jpg', 1, 800.00, 800.00, '2025-11-17 10:02:32', 0),
+(76, 63, 79, 'Panda Coco', 'products/product_79_17633044345829_5036.jpg', 1, 800.00, 800.00, '2025-11-17 10:16:01', 0),
+(77, 64, 76, 'Froggit', 'products/product_76_17633034398940_7798.jpg', 1, 600.00, 600.00, '2025-11-17 10:38:56', 1),
+(78, 65, 75, 'Fox Tales', 'products/product_75_17633032942877_9031.jpg', 1, 5000.00, 5000.00, '2025-11-17 11:03:06', 0),
+(79, 66, 69, 'Bun Bun', 'products/product_69_17633019829208_5204.jpg', 1, 950.00, 950.00, '2025-11-17 11:04:49', 1),
+(80, 67, 73, 'Derpy', 'products/product_73_17633029085546_5869.jpg', 1, 2500.00, 2500.00, '2025-11-17 11:07:46', 0),
+(81, 68, 75, 'Fox Tales', 'products/product_75_17633032942877_9031.jpg', 1, 5000.00, 5000.00, '2025-11-17 11:50:58', 0),
+(82, 69, 71, 'Sakura Cat', 'products/product_71_17633026998882_4139.jpg', 1, 1500.00, 1500.00, '2025-11-17 12:01:23', 0);
 
 -- --------------------------------------------------------
 
@@ -363,17 +395,17 @@ INSERT INTO `products` (`id`, `category_id`, `supplier_id`, `product_name`, `des
 (66, 26, 17, 'Aurora Bear', 'Soft premium teddy bear; perfect for gifting.', 650.00, 950.00, 'products/product_66_17633015445838_9454.jpg', 1, '2025-11-16 13:59:04', '2025-11-16 18:26:16', 5.00, 7),
 (67, 26, 16, 'Axolotl', 'Cute pastel pink axolotl plush with fluffy gills.', 600.00, 900.00, 'products/product_67_17633016555069_8996.jpg', 1, '2025-11-16 14:00:55', '2025-11-16 14:13:46', 5.00, 1),
 (68, 26, 15, 'Pigeon and Dovey', 'Birds of a feather flock together for real', 1400.00, 1800.00, 'products/product_68_17633018892706_7182.jpg', 1, '2025-11-16 14:04:49', '2025-11-16 14:04:49', 0.00, 0),
-(69, 26, 17, 'Bun Bun', 'Cute and cuddly bunny plush with long floppy ears.', 600.00, 950.00, 'products/product_69_17633019829208_5204.jpg', 1, '2025-11-16 14:06:22', '2025-11-16 14:06:22', 0.00, 0),
+(69, 26, 17, 'Bun Bun', 'Cute and cuddly bunny plush with long floppy ears.', 600.00, 950.00, 'products/product_69_17633019829208_5204.jpg', 1, '2025-11-16 14:06:22', '2025-11-17 11:06:30', 4.00, 1),
 (70, 26, 15, 'Capybara Family', 'Soft and chubby Capybara plushies inspired by the popular “Capybara Chill” trend.', 700.00, 1000.00, 'products/product_70_17633024738180_6526.jpg', 1, '2025-11-16 14:14:33', '2025-11-16 16:50:52', 5.00, 1),
 (71, 26, 15, 'Sakura Cat', 'Soft kitty plush with cute embroidered whiskers.', 1200.00, 1500.00, 'products/product_71_17633026998882_4139.jpg', 1, '2025-11-16 14:18:19', '2025-11-16 14:18:19', 0.00, 0),
 (72, 26, 15, 'Sakura Cow', 'Soft cow plush with tiny horns and a friendly smile, friends with Sakura Cat', 1200.00, 1500.00, 'products/product_72_17633027830786_8633.jpg', 1, '2025-11-16 14:19:43', '2025-11-16 14:19:43', 0.00, 0),
 (73, 26, 16, 'Derpy', 'A funny, silly-faced plush tiger inspired by K-Pop Demon Hunters\' Derpy.', 2000.00, 2500.00, 'products/product_73_17633029085546_5869.jpg', 1, '2025-11-16 14:21:48', '2025-11-16 14:21:48', 0.00, 0),
 (74, 26, 16, 'Pastel Dragon', 'Cute chibi-style dragon with soft wings and pastel rainbow colors.', 3500.00, 4000.00, 'products/product_74_17633030404687_8830.jpg', 1, '2025-11-16 14:24:00', '2025-11-16 14:50:05', 0.00, 0),
 (75, 26, 16, 'Fox Tales', 'Redi and Bluey, the cute nine-tailed fox lovers plushies.', 4650.00, 5000.00, 'products/product_75_17633032942877_9031.jpg', 1, '2025-11-16 14:28:14', '2025-11-16 14:28:14', 0.00, 0),
-(76, 26, 15, 'Froggit', 'Round frog plush with big eyes and a cute smile.', 400.00, 600.00, 'products/product_76_17633034398940_7798.jpg', 1, '2025-11-16 14:30:39', '2025-11-16 14:30:39', 0.00, 0),
+(76, 26, 15, 'Froggit', 'Round frog plush with big eyes and a cute smile.', 400.00, 600.00, 'products/product_76_17633034398940_7798.jpg', 1, '2025-11-16 14:30:39', '2025-11-17 10:48:51', 5.00, 1),
 (77, 26, 16, 'Hedgie Huggies', 'A family of huggable hedgehog plushies with round body and tiny paws.', 3000.00, 3250.00, 'products/product_77_17633035383665_5896.jpeg', 1, '2025-11-16 14:32:18', '2025-11-16 14:32:18', 0.00, 0),
-(78, 26, 17, 'Lambutan', 'Soft and cuddly lamb plush with curled wool texture and horns. (Buying grants a random lamb plush.)', 800.00, 1000.00, 'products/product_78_17633037135542_1953.jpg', 1, '2025-11-16 14:35:13', '2025-11-16 18:39:33', 5.00, 1),
-(79, 26, 17, 'Panda Coco', 'Classic black-and-white panda plush with soft fur. (Buying may grant the special edition red panda.)', 500.00, 800.00, 'products/product_79_17633044345829_5036.jpg', 1, '2025-11-16 14:47:14', '2025-11-16 14:49:22', 0.00, 0);
+(78, 26, 17, 'Lambutan', 'Soft and cuddly lamb plush with curled wool texture and horns. (Buying grants a random lamb plush.)', 800.00, 1000.00, 'products/product_78_17633037135542_1953.jpg', 1, '2025-11-16 14:35:13', '2025-11-17 09:00:00', 5.00, 1),
+(79, 26, 17, 'Panda Coco', 'Classic black-and-white panda plush with soft fur. (Buying may grant the special edition red panda.)', 500.00, 800.00, 'products/product_79_17633044345829_5036.jpg', 1, '2025-11-16 14:47:14', '2025-11-17 07:34:10', 0.00, 0);
 
 -- --------------------------------------------------------
 
@@ -397,8 +429,6 @@ INSERT INTO `product_categories` (`id`, `product_id`, `category_id`, `created_at
 (4, 69, 26, '2025-11-16 15:06:30'),
 (6, 71, 26, '2025-11-16 15:06:30'),
 (7, 72, 26, '2025-11-16 15:06:30'),
-(28, 79, 38, '2025-11-16 15:50:28'),
-(29, 79, 26, '2025-11-16 15:50:28'),
 (30, 76, 38, '2025-11-16 15:50:51'),
 (31, 76, 26, '2025-11-16 15:50:51'),
 (32, 75, 37, '2025-11-16 15:51:10'),
@@ -413,11 +443,13 @@ INSERT INTO `product_categories` (`id`, `product_id`, `category_id`, `created_at
 (43, 66, 26, '2025-11-16 15:54:35'),
 (44, 77, 37, '2025-11-16 15:54:52'),
 (45, 77, 26, '2025-11-16 15:54:52'),
-(46, 78, 38, '2025-11-16 15:55:22'),
-(47, 78, 26, '2025-11-16 15:55:22'),
-(48, 70, 26, '2025-11-16 15:57:15'),
-(49, 70, 38, '2025-11-16 15:57:15'),
-(50, 70, 37, '2025-11-16 15:57:15');
+(66, 79, 26, '2025-11-17 07:36:27'),
+(67, 79, 38, '2025-11-17 07:36:27'),
+(86, 70, 26, '2025-11-17 07:54:02'),
+(87, 70, 37, '2025-11-17 07:54:02'),
+(88, 70, 38, '2025-11-17 07:54:02'),
+(143, 78, 26, '2025-11-17 09:00:02'),
+(144, 78, 38, '2025-11-17 09:00:02');
 
 -- --------------------------------------------------------
 
@@ -503,16 +535,10 @@ CREATE TABLE `reviews` (
 --
 
 INSERT INTO `reviews` (`id`, `product_id`, `user_id`, `rating`, `comment`, `created_at`, `updated_at`, `admin_reply`, `admin_reply_at`) VALUES
-(24, 67, 11, 5, 'ang ganda', '2025-11-16 14:13:46', '2025-11-16 22:13:46', NULL, NULL),
+(24, 67, 11, 5, 'ang ganda', '2025-11-16 14:13:46', '2025-11-19 09:47:17', 'puta', '2025-11-19 01:47:17'),
 (25, 66, 11, 5, 'cute b***t hehehe', '2025-11-16 14:15:49', '2025-11-16 22:52:17', 'kalbonara', '2025-11-16 14:52:17'),
-(26, 70, 15, 5, 'puta', '2025-11-16 16:50:52', '2025-11-17 00:51:02', NULL, NULL),
-(27, 66, 15, 5, 'puta ang ganda tangina', '2025-11-16 18:25:41', '2025-11-17 02:25:41', NULL, NULL),
-(28, 66, 15, 5, 'puta ang ganda tangina', '2025-11-16 18:25:43', '2025-11-17 02:25:43', NULL, NULL),
-(29, 66, 15, 5, 'puta ang ganda tangina', '2025-11-16 18:25:46', '2025-11-17 02:25:46', NULL, NULL),
-(30, 66, 15, 5, 'puta ang ganda tangina', '2025-11-16 18:25:47', '2025-11-17 02:25:47', NULL, NULL),
-(31, 66, 15, 5, 'puta ang ganda tangina', '2025-11-16 18:25:48', '2025-11-17 02:25:48', NULL, NULL),
-(32, 66, 15, 5, '', '2025-11-16 18:26:16', '2025-11-17 02:26:16', NULL, NULL),
-(33, 78, 15, 5, 'Lam burat', '2025-11-16 18:39:33', '2025-11-17 02:39:51', NULL, NULL);
+(35, 76, 18, 5, '', '2025-11-17 10:48:51', '2025-11-17 18:48:51', NULL, NULL),
+(36, 69, 18, 4, '', '2025-11-17 11:06:21', '2025-11-17 19:06:30', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -535,7 +561,7 @@ INSERT INTO `shopping_carts` (`id`, `customer_id`, `created_at`, `updated_at`) V
 (3, 1, '2025-11-01 10:38:25', '2025-11-01 10:38:25'),
 (8, 11, '2025-11-02 15:12:05', '2025-11-02 15:12:05'),
 (9, 14, '2025-11-11 17:31:31', '2025-11-11 17:31:31'),
-(11, 15, '2025-11-16 16:18:20', '2025-11-16 16:18:20');
+(13, 18, '2025-11-17 10:15:55', '2025-11-17 10:15:55');
 
 -- --------------------------------------------------------
 
@@ -582,18 +608,20 @@ CREATE TABLE `users` (
   `profile_picture` varchar(255) DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
   `role` enum('customer','admin') DEFAULT 'customer',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `email`, `first_name`, `last_name`, `phone`, `address`, `city`, `postal_code`, `country`, `profile_picture`, `password_hash`, `role`, `created_at`) VALUES
-(1, 'admin@shop.com', 'ADMIN', 'PRIMAVERA', '', 'NORTH DAANGHARI', 'TAGUIG CITY', '1632', 'Philippines', 'user_1_1762239155.png', '$2y$12$jimZJ6U8/A9zi6tvIzA4BeYEHR.2s7kaJi6oisRcgMLIzjXSzr9SS', 'admin', '2025-10-27 15:03:27'),
-(11, 'juliannetumpap08@gmail.com', 'Julianne', 'Tumpap', '09771910453', 'Culdesac, Sun Valley', 'Parañaque City', '0', 'Philippines', 'user_11_1762578715.jpg', '$2y$12$TVJZwOX/jmyk3iF8E8hoLe19mSiQUHQwug7WS2nsGAtuV5sjvhzSO', 'customer', '2025-11-02 10:26:54'),
-(14, 'lilithzie@gmail.com', 'Julrimi', 'Tumavera', '09143143143', '2292 I Love Jirimi, Baby Street', 'Paprima', '8888', 'Philippines', 'user_14_17628823928293_5354.jpg', '$2y$12$GbvZSyuDAiANRVtNdQejhenAemaZDBxYwWKK.TILwtaPNhTBYj2Mq', 'admin', '2025-11-11 17:30:58'),
-(15, 'primaveraron@gmail.com', 'Ron Jeremy', 'Primavera', '09943327537', 'Road 8, North Daanghari, Taguig City', 'TAGUIG CITY', '1632', 'Philippines', 'user_15_17633099595088_2321.jpg', '$2y$12$mgUYc5aidFKKuJkt8WAxsu7HFUKSHyUOOk87tDiKOInH3ztjWPcdW', 'customer', '2025-11-16 16:18:10');
+INSERT INTO `users` (`id`, `email`, `first_name`, `last_name`, `phone`, `address`, `city`, `postal_code`, `country`, `profile_picture`, `password_hash`, `role`, `created_at`, `is_active`) VALUES
+(1, 'admin@shop.com', 'ADMIN', 'PRIMAVERA', '', 'NORTH DAANGHARI', 'TAGUIG CITY', '1632', 'Philippines', 'user_1_17633571403720_2818.png', '$2y$12$jimZJ6U8/A9zi6tvIzA4BeYEHR.2s7kaJi6oisRcgMLIzjXSzr9SS', 'admin', '2025-10-27 15:03:27', 1),
+(11, 'juliannetumpap08@gmail.com', 'Julianne', 'Tumpap', '09771910453', 'Culdesac, Sun Valley', 'Parañaque City', '0', 'Philippines', 'user_11_1762578715.jpg', '$2y$12$TVJZwOX/jmyk3iF8E8hoLe19mSiQUHQwug7WS2nsGAtuV5sjvhzSO', 'customer', '2025-11-02 10:26:54', 1),
+(14, 'lilithzie@gmail.com', 'Julrimi', 'Tumavera', '09143143143', '2292 I Love Jirimi, Baby Street', 'Paprima', '8888', 'Philippines', 'user_14_17628823928293_5354.jpg', '$2y$12$GbvZSyuDAiANRVtNdQejhenAemaZDBxYwWKK.TILwtaPNhTBYj2Mq', 'admin', '2025-11-11 17:30:58', 1),
+(17, 'akotojem@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, 'Philippines', NULL, '$2y$12$nwMr7I2/mnWeKm.0Ro41BezI3uSlky2yOcZLeYTgOcbXO/WJdcGO6', 'customer', '2025-11-17 09:40:59', 1),
+(18, 'primaveraron@gmail.com', 'Ron Jeremy', 'Primavera', '09943327537', 'Road 8, North Daanghari, Taguig City', 'TAGUIG CITY', '1632', 'Philippines', NULL, '$2y$12$XZGzL3srb2ZVw8rWarY8.uUgtQIhRdt0/LrUkXSmZqIIKBQIWZi9u', 'customer', '2025-11-17 10:15:25', 1);
 
 --
 -- Indexes for dumped tables
@@ -722,7 +750,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `cart_items`
 --
 ALTER TABLE `cart_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -734,61 +762,61 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `order_history`
 --
 ALTER TABLE `order_history`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
 
 --
 -- AUTO_INCREMENT for table `product_categories`
 --
 ALTER TABLE `product_categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
 
 --
 -- AUTO_INCREMENT for table `product_images`
 --
 ALTER TABLE `product_images`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `shopping_carts`
 --
 ALTER TABLE `shopping_carts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
@@ -800,7 +828,7 @@ ALTER TABLE `suppliers`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- Constraints for dumped tables

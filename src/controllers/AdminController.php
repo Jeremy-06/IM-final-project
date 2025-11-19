@@ -773,7 +773,7 @@ class AdminController {
         Session::setFlash('message', 'Cannot delete user with active orders. Wait until all orders are completed or cancel them first.');
         header('Location: admin.php?page=users');
         exit();
-    }        if ($this->userModel->updateStatus($id, 0)) {
+    }        if ($this->userModel->delete($id)) {
             // Force logout the deleted user by destroying their session
             $this->destroyUserSessions($id);
             

@@ -3,7 +3,7 @@
 class Config {
     // Database configuration
     const DB_HOST = 'localhost';
-    const DB_NAME = 'im_final_project';
+    const DB_NAME = 'db_lotus_plushies';
     const DB_USER = 'root';
     const DB_PASS = '';
     
